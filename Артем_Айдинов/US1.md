@@ -1,4 +1,4 @@
-Tech AI-agent
+AI-agent
 
 User story:
 
