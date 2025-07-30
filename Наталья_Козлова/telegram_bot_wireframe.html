@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Bot Wireframe</title>
+    <style>
+        :root {
+            --primary-color: #0088cc;
+            --error-color: #dc3545;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --border-color: #e9ecef;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .app-container {
+            max-width: 414px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: var(--primary-color);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .message-container {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .bot-message {
+            background: #e5f6ff;
+            border-radius: 12px;
+            padding: 12px 16px;
+            align-self: flex-start;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background: #e2ffdb;
+            border-radius: 12px;
+            padding: 12px 16px;
+            align-self: flex-end;
+            max-width: 80%;
+        }
+        
+        .input-group {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 414px;
+            padding: 12px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            outline: none;
+        }
+        
+        .btn {
+            padding: 12px 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+        
+        .post-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .post-date {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .post-text {
+            margin-bottom: 8px;
+        }
+        
+        .post-stats {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">Telegram Channel Analyzer Bot</div>
+        
+        <div class="message-container" id="chat">
+            <!-- Начальный экран -->
+            <div class="bot-message">
+                Добро пожаловать в Channel Analyzer Bot! 
+                Введите URL канала для анализа (например: @channelname)
+            </div>
+            
+            <!-- Пример ввода пользователя -->
+            <div class="user-message">@tech_news</div>
+            
+            <!-- Запрос параметров -->
+            <div class="bot-message">
+                Укажите параметры анализа:
+                <br><br>
+                1. Период (например: 01.01.2024-31.12.2024)
+                <br>
+                2. Ключевые слова через запятую
+            </div>
+            
+            <!-- Пример ввода параметров -->
+            <div class="user-message">
+                01.01.2024-31.12.2024, AI, разработка
+            </div>
+            
+            <!-- Результаты -->
+            <div class="bot-message">
+                Найдено 15 постов по вашим параметрам:
+                
+                <div class="post-item">
+                    <div class="post-date">15.07.2024</div>
+                    <div class="post-text">Новые тенденции в разработке AI систем в 2024 году...</div>
+                    <div class="post-stats">👍 245 | 💬 32</div>
+                </div>
+                
+                <div class="post-item">
+                    <div class="post-date">10.06.2024</div>
+                    <div class="post-text">Обзор лучших практик разработки микросервисов...</div>
+                    <div class="post-stats">👍 189 | 💬 21</div>
+                </div>
+            </div>
+            
+            <!-- Пример ошибки -->
+            <div class="bot-message error">
+                <div class="error-message">Некорректный URL канала. Пожалуйста, введите в формате @channelname</div>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <input type="text" class="input-field" placeholder="Введите сообщение...">
+            <button class="btn">Отправить</button>
+        </div>
+    </div>
+    
+    <script>
+        // Навигация между экранами
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.style.display = 'none';
+            });
+            document.getElementById(screenId).style.display = 'block';
+        }
+        
+        // Имитация отправки сообщения
+        document.querySelector('.btn').addEventListener('click', function() {
+            const input = document.querySelector('.input-field');
+            if (input.value.trim()) {
+                const chat = document.getElementById('chat');
+                const newMessage = document.createElement('div');
+                newMessage.className = 'user-message';
+                newMessage.textContent = input.value;
+                chat.appendChild(newMessage);
+                input.value = '';
+                
+                // Прокрутка вниз
+                chat.scrollTop = chat.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
