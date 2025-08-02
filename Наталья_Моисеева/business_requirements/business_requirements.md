@@ -6,4 +6,4 @@
 
 ## Use case 
 
-![](Use Case.pdf)
+![](BPMN диаграмма агента_v2.png)
