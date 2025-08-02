@@ -6,7 +6,7 @@
 
 ## Use case 
 
-![](./Use%20Case.pdf)
+![](Use_Case.png)
 
 ## Макет агента
 
