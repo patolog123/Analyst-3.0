@@ -6,4 +6,4 @@
 
 ## Use case 
 
-![](Наталья_Моисеева/business_requirements/Use\ Case.pdf)
+![](Use\ Case.pdf)
