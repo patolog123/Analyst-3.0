@@ -1,82 +1,78 @@
 ```mermaid
-activityDiagram
+flowchart TD
     title Процесс работы с AI-Индексатором артефактов
 
-    start
+    %% Начало
+    Start([Начало])
 
-    if (Действие аналитика: присвоить метки?) then (Да)
-        partition UI {
-            :Выбрать один или несколько артефактов;
-            :Нажать «Присвоить метки»;
-            if (Выбрано ≥ N артефактов?) then (Да)
-                :Запустить фоновую задачу;
-                :Показать уведомление о старте фоновой задачи;
-                stop
-            else (Нет)
-            endif
-        }
+    %% Выбор действия аналитика
+    Start --> DecisionAction{Что делает аналитик?}
+    DecisionAction --> |Присвоить метки| AssignLabels
+    DecisionAction --> |Фильтровать по меткам| FilterTags
 
-        partition AI {
-            :Отправить запрос в AI-Индексатор;
-            alt Сбой или низкая уверенность
-                :AI-сервис недоступен или таймаут;
-                partition UI_fallback {
-                    :Показать ошибку «Сервис недоступен»;
-                    :Предложить ввод меток вручную;
-                }
-                -->|Аналитик вводит метки| UI_decision
-            else Успех
-                :AI возвращает список меток с confidence;
-                if (confidence < порог?) then (Да)
-                    :Показать предупреждение о низкой уверенности;
-                else (Нет)
-                    :Отобразить рекомендации AI;
-                endif
-                --> UI_decision
-            end
-        }
+    %% Присвоение меток
+    subgraph UI1 [Интерфейс Пользователя]
+      AssignLabels --> SelectArtifacts[Выбрать один или несколько артефактов]
+      SelectArtifacts --> ClickAssign[Нажать "Присвоить метки"]
+      ClickAssign --> DecisionBulk{Выбрано ≥ N артефактов?}
+      DecisionBulk --> |Да| StartBackground([Запустить фоновую задачу])
+      StartBackground --> NotifyBG[Показать уведомление о старте фоновой задачи]
+      NotifyBG --> End1([Конец])
+      DecisionBulk --> |Нет| ToAI
+    end
 
-        partition UI_decision {
-            activity «Взаимодействие с UI»
-            :Принять/отклонить рекомендации;
-            :Добавить собственные метки;
-            if (Превышен лимит меток?) then (Да)
-                :Показать предупреждение о лимите;
-                :Дождаться удаления лишних меток;
-            else (Нет)
-            endif
-            :Нажать «Сохранить»;
-        }
+    subgraph AI [Система / AI-Индексатор]
+      ToAI[Отправить запрос в AI-Индексатор] --> DecisionAI{Сбой или низкая уверенность?}
+      DecisionAI --> |Да| AIServerDown[Сервис недоступен или таймаут]
+      AIServerDown --> UIFallback
+      DecisionAI --> |Нет| AISuccess[AI вернул рекомендации с confidence]
+      AISuccess --> DecisionConf{confidence < порог?}
+      DecisionConf --> |Да| WarnLowConf[Показать предупреждение о низкой уверенности]
+      DecisionConf --> |Нет| ShowRecs[Отобразить рекомендации AI]
+      WarnLowConf --> UIFallback
+      ShowRecs --> UIFallback
+    end
 
-        partition DB {
-            fork
-                :Сохранить принятые метки в БД;
-            fork again
-                :Отправить метки и фидбэк в очередь дообучения модели;
-            end fork
-            :Обновить интерфейс с новыми метками;
-        }
-        --> stop
+    subgraph UIFallback [Интерфейс Пользователя]
+      UIFallback --> ManualInput[Предложить ввод меток вручную]
+      ManualInput --> UIReview
+    end
 
-    else (Нет: фильтровать по меткам)
-        partition UI_filter {
-            :Нажать «Фильтровать»;
-            :Выбрать до 5 меток;
-            :Применить фильтр;
-        }
+    subgraph UIReview [Интерфейс Пользователя]
+      UIReview[Взаимодействие с UI] --> AcceptReject[Принять/отклонить рекомендации]
+      AcceptReject --> AddCustom[Добавить собственные метки]
+      AddCustom --> DecisionLimit{Превышен лимит меток?}
+      DecisionLimit --> |Да| WarnLimit[Показать предупреждение о лимите]
+      WarnLimit --> WaitRemoval[Дождаться удаления лишних меток]
+      WaitRemoval --> ClickSave
+      DecisionLimit --> |Нет| ClickSave[Нажать "Сохранить"]
+      ClickSave --> DB
+    end
 
-        partition DB_filter {
-            :Выполнить запрос к хранилищу артефактов;
-        }
+    subgraph DB [Система / БД]
+      DB --> SaveTags[Сохранить метки в БД]
+      DB --> EnqueueFeedback[Отправить метки и фидбэк в очередь дообучения]
+      EnqueueFeedback --> UpdateUI[Обновить интерфейс с новыми метками]
+      UpdateUI --> End1
+    end
 
-        partition UI_results {
-            if (Результат пуст?) then (Да)
-                :Показать «Ничего не найдено»;
-                :Предложить изменить фильтр;
-            else (Нет)
-                :Отобразить отфильтрованный список;
-            endif
-        }
-        --> stop
-    endif
+    %% Фильтрация по меткам
+    subgraph UI2 [Интерфейс Пользователя]
+      FilterTags --> ClickFilter[Нажать "Фильтровать"]
+      ClickFilter --> SelectTags[Выбрать до 5 меток]
+      SelectTags --> ApplyFilter[Применить фильтр]
+    end
+
+    subgraph DB2 [Система / БД]
+      ApplyFilter --> QueryArtifacts[Выполнить запрос к хранилищу артефактов]
+    end
+
+    subgraph UI3 [Интерфейс Пользователя]
+      QueryArtifacts --> DecisionEmpty{Результат пуст?}
+      DecisionEmpty --> |Да| ShowNoResults[Показать "Ничего не найдено"]
+      ShowNoResults --> SuggestChange[Предложить изменить фильтр]
+      SuggestChange --> End1
+      DecisionEmpty --> |Нет| ShowResults[Отобразить список артефактов]
+      ShowResults --> End1
+    end
 ```
