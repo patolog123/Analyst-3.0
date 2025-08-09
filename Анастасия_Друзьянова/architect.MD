@@ -5,11 +5,11 @@ graph TD
     end
 
     subgraph "Клиент (FE)"
-        B[Telegram Bot APP]
+        B[Telegram Bot App]
     end
 
     subgraph "BE"
-        C[API-сервер]
+        C[REST API]
     end
 
     subgraph "Очереди сообщений"
