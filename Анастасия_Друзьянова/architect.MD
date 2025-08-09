@@ -10,8 +10,6 @@ graph TD
 
     subgraph "BE"
         C[REST API]
-        J[Брокер]
-        F[Фоновые задачи]
     end
 
     subgraph "Хранилища"
@@ -26,8 +24,6 @@ graph TD
     %% Связи между компонентами
     A -- Вопрос (query: txt) --> B
     B -- HTTPS --> C
-    C -- Ставит задачи --> J
-    J -- Передаёт задачи --> F
     F -- HTTPS --> H
     F -- TCP --> G
     F -- TCP --> I
