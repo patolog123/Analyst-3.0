@@ -5,7 +5,7 @@ graph TD
     end
 
     subgraph "Клиент (FE)"
-        B[Telegram Bot App]
+        B[Telegram Bot]
     end
 
     subgraph "BE"
@@ -22,7 +22,7 @@ graph TD
     end
 
     %% Связи между компонентами
-    A -- Вопрос (query: txt) --> B
+    A --  --> B
     B -- HTTPS --> C
     C -- HTTPS --> H
     C -- TCP --> D
