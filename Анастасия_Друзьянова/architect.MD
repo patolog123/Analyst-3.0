@@ -5,7 +5,7 @@ graph TD
     end
 
     subgraph "Фронтенд"
-        B[Telegram Bot API]
+        B[Telegram Bot]
     end
 
     subgraph "Бэкенд (FastAPI)"
