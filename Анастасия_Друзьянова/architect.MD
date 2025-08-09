@@ -5,7 +5,7 @@ graph TD
     end
 
     subgraph "Клиент (FE)"
-        B[Telegram Bot]
+        B[Telegram Bot APP]
     end
 
     subgraph "BE"
