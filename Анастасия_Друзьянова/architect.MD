@@ -8,8 +8,8 @@ graph TD
         B[Telegram Bot]
     end
 
-    subgraph "Бэкенд (FastAPI)"
-        C[API-сервер <br><i>FastAPI</i>]
+    subgraph "Бэкенд"
+        C[API-сервер]
     end
 
     subgraph "Очереди сообщений"
