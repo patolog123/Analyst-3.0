@@ -10,9 +10,7 @@ graph TD
 
     subgraph "Бэкенд (FastAPI)"
         C[API-сервер <br><i>FastAPI</i>]
-        D[Сервис бизнес-логики <br><i>Обработка запросов и построение дерева</i>]
-        E[Сервис AI-индексатора <br><i>LangChain / LLM SDK</i>]
-        F[Фоновый обработчик задач <br><i>Celery / RQ / custom worker</i>]
+        F[Фоновый обработчик задач <br><i>Celery</i> Бизнес Логика]
     end
 
     subgraph "Хранилища"
