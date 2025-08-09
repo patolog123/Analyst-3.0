@@ -25,7 +25,7 @@ graph TD
     A -- Вопрос (query: txt) --> B
     B -- HTTPS --> C
     F -- HTTPS --> H
-    F -- TCP --> G
-    F -- TCP --> I
-    F -- Уведомляет о результате --> B
+    C -- TCP --> G
+    C -- TCP --> I
+    C -- Уведомляет о результате --> B
 ```
