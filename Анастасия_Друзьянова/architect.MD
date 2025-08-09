@@ -22,7 +22,7 @@ graph TD
     end
 
     %% Связи между компонентами
-    A --  --> B
+    A -- ... --> B
     B -- HTTPS --> C
     C -- HTTPS --> H
     C -- TCP --> D
