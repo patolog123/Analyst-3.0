@@ -13,7 +13,7 @@ graph TD
     end
 
     subgraph "Очереди сообщений"
-        J[(RabbitMQ)]
+        J[(брокер)]
     end
 
     subgraph "Фоновые задачи"
