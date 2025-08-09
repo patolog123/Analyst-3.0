@@ -1,14 +1,14 @@
 ```mermaid
 graph TD
-    subgraph "Клиент (Пользователь)"
+    subgraph "Пользователь"
         A[Пользователь Telegram]
     end
 
-    subgraph "Фронтенд"
+    subgraph "Клиент (FE)"
         B[Telegram Bot]
     end
 
-    subgraph "Бэкенд"
+    subgraph "BE"
         C[API-сервер]
     end
 
