@@ -26,7 +26,7 @@ graph TD
     end
 
     subgraph "Внешние сервисы"
-        H{{LLM API <br><i>GigaChat / OpenAI / др.</i>}}
+        H{{LLM API <br><i>GigaChat</i>}}
     end
 
     %% Связи между компонентами
