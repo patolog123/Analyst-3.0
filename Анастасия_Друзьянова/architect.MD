@@ -4,11 +4,11 @@ graph TD
         A[Пользователь Telegram]
     end
 
-    subgraph "Клиент (FE)"
+    subgraph "Frontend"
         B[Telegram Bot]
     end
 
-    subgraph "BE"
+    subgraph "Backend"
         C[REST API]
     end
 
