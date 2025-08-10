@@ -9,7 +9,7 @@ graph TD
     end
     
     subgraph "server"
-        C[telegram]
+        C[TG]
     end
 
     subgraph "Backend"
