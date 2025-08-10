@@ -29,5 +29,5 @@ graph TD
     B <-- HTTPS --> C
     C <-- HTTPS --> D
     D -- TCP/IP --> E
-    D -- HTTPS --> F
+    D -. HTTPS .-> F
 ```
