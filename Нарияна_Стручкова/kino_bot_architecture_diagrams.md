@@ -1,4 +1,4 @@
-<img width="955" height="692" alt="image" src="https://github.com/user-attachments/assets/6e4c34ec-9ca3-4d96-af40-96db78634784" /># Архитектура Telegram-бота (Киносоветник)
+# Архитектура Telegram-бота (Киносоветник)
 ```mermaid
 graph TD
     subgraph "Клиент"
