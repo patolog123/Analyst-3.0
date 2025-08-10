@@ -7,22 +7,27 @@ graph TD
     subgraph "Frontend"
         B[Telegram Bot]
     end
+    
+    subgraph "Backend"
+        C[tg server]
+    end
 
     subgraph "Backend"
-        C[REST API]
+        D[REST API]
     end
 
     subgraph "Хранилища"
-        D[(БД)]
+        E[(БД)]
     end
 
     subgraph "Внешние сервисы"
-        H{{LLM API}}
+        F{{LLM API}}
     end
 
     %% Связи между компонентами
     A -- ... --> B
     B <-- HTTPS --> C
-    C -- HTTPS --> H
-    C -- TCP --> D
+    C -- HTTPS --> D
+    D -- TCP --> E
+    D -- TCP --> F
 ```
