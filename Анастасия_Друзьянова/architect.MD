@@ -5,7 +5,7 @@ graph TD
     end
 
     subgraph "Frontend"
-        B[Telegram Bot]
+        B[TG Bot]
     end
     
     subgraph "server"
