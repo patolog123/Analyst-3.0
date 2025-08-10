@@ -8,8 +8,8 @@ graph TD
         B[Telegram Bot]
     end
     
-    subgraph "Backend"
-        C[tg server]
+    subgraph "tg server"
+        C[...]
     end
 
     subgraph "Backend"
