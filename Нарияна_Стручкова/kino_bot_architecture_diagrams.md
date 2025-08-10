@@ -1,21 +1,38 @@
-# Архитектура Telegram-бота (Киносоветник)
+<img width="955" height="692" alt="image" src="https://github.com/user-attachments/assets/6e4c34ec-9ca3-4d96-af40-96db78634784" /># Архитектура Telegram-бота (Киносоветник)
 ```mermaid
-sequenceDiagram
-    participant U as Пользователь
-    participant T as Telegram (Bot API)
-    participant B as Telegram-бот
-    participant DB as PostgreSQL
-    participant G as GigaChat
-    participant I as IMDb API
+graph TD
+    subgraph "Клиент"
+        A[Пользователь Telegram]
+    end
+    
+    subgraph "Telegram"
+        B[КиноБот]
+        I[Telegram Bot API]
+    end
+    
+    subgraph "Backend"
+        D[AI Agent Python]
+    end
+    
+    subgraph "Хранилища"
+        S[(SQLite: логи/предпочтения)]
+        V[Vector DB]
+    end
+    
+    subgraph "Внешние сервисы"
+        K[Kinopoisk API]
+        GC[GigaChat API]
+    end
 
-    U->>T: /recommend
-    T->>B: Webhook update
-    B->>DB: получить prefs/history
-    B->>U: спросить настроение и время
-    U->>B: mood + duration
-    B->>I: (опционально) метаданные тайтлов
-    B->>G: промпт на рекомендации/объяснения
-    G-->>B: список кандидатов + причины
-    B->>DB: сохранить выдачу/события
-    B-->>U: до 5 карточек (смотреть/позже/не нравится)
+    A -- "MTProto/TCP" --> B
+    B -- "HTTPS Webhook" --> D
+    D -- "SQL over TCP" --> S
+    D -- "gRPC/HTTP" --> V
+    D -- "HTTPS REST" --> K
+    D -- "HTTPS REST" --> GC
+    D -- "HTTPS Bot API" --> I
+    I -- "MTProto/TCP" --> A
+
+    GC -- "Генерация эмбеддингов" --> V
+    K -- "Обновление метаданных" --> V
 ```
