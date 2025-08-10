@@ -27,7 +27,7 @@ graph TD
     %% Связи между компонентами
     A --  .  --> B
     B <-. HTTPS .-> C
-    C <-- HTTPS --> D
+    C <-. HTTPS .-> D
     D -- TCP/IP --> E
     D -. HTTPS .-> F
 ```
