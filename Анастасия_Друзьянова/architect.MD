@@ -8,8 +8,8 @@ graph TD
         B[Telegram Bot]
     end
     
-    subgraph "tg server"
-        C[...]
+    subgraph "server"
+        C[telegram]
     end
 
     subgraph "Backend"
@@ -27,7 +27,7 @@ graph TD
     %% Связи между компонентами
     A -- ... --> B
     B <-- HTTPS --> C
-    C -- HTTPS --> D
+    C <-- HTTPS --> D
     D -- TCP --> E
     D -- TCP --> F
 ```
