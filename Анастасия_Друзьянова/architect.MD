@@ -28,6 +28,6 @@ graph TD
     A -- ... --> B
     B <-- HTTPS --> C
     C <-- HTTPS --> D
-    D -- TCP --> E
-    D -- TCP --> F
+    D -- TCP/IP --> E
+    D -- HTTPS --> F
 ```
