@@ -1,5 +1,4 @@
 # Архитектура Telegram-бота (Киносоветник)
-## Последовательность запроса /recommend
 ```mermaid
 sequenceDiagram
     participant U as Пользователь
