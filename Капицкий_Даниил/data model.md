@@ -20,7 +20,7 @@ Diary - Записи в дневнике
 | diary_id "PK" | id записи в дневнике |
 | record_number | номер записи |
 | record_description | текст записи |
-| Created_at | Дата создания |
+| created_at | Дата создания |
 
 ## Объект Diary_advice
 
@@ -40,5 +40,5 @@ Advice - Совет от ии агента
 |---------|----------|
 | advice_id "PK" | id совета |
 | advice_number | номер совета |
-| create_at | дата создания |
+| created_at | дата создания |
 | advice_description | текст совета |
