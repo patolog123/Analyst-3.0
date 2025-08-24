@@ -32,7 +32,7 @@ Diary_advice
 | advice_id "FK" | id совета |
 
 
-## Объект Diary_advice
+## Объект Advice
 
 Advice - Совет от ии агента
 
