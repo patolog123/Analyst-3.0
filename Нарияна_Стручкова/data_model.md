@@ -6,7 +6,7 @@
 
 | Атрибут | Тип | Описание | Ограничения |
 |---------|------|----------|-------------|
-| id | Integer | PK, Уникальный идентификатор в системе | Auto Increment |
+| id | Integer | Уникальный идентификатор в системе | Auto Increment |
 | telegram_id | BigInteger | Уникальный ID пользователя в Telegram | Not Null, Unique |
 | username | String | Никнейм в Telegram (@username) | |
 | first_name | String | Имя пользователя | Not Null |
