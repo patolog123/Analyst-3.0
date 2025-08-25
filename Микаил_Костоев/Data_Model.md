@@ -1,98 +1,121 @@
-# Модель данных AI-агента SocioMind
-
-## Объект User (Пользователь)
+## Объект users (Пользователь)
 
 **Основная сущность:** Хранит данные пользователя Telegram
 
-| Атрибут | Тип | Описание | Ограничения |
-|---------|------|----------|-------------|
-| id | Integer | PK, Уникальный идентификатор в системе | Auto Increment |
-| telegram_id | BigInteger | Уникальный ID пользователя в Telegram | Not Null, Unique |
-| username | String | Никнейм в Telegram (@username) | |
-| first_name | String | Имя пользователя | Not Null |
+| Атрибут             | Тип          | Описание                                    | Ограничения                     |
+|---------------------|--------------|---------------------------------------------|---------------------------------|
+| id                  | Integer      | Уникальный идентификатор в системе           | Primary Key, Auto Increment     |
+| telegram_id         | BigInteger   | Уникальный ID пользователя в Telegram       | Not Null, Unique                |
+| username            | String(255)  | Никнейм в Telegram                          |                                 |
+| full_name           | String(255)  | Полное имя пользователя                     |                                 |
+| specialization      | String(100)  | Специализация пользователя                  | e.g., 'история языка', 'синтаксис' |
+| subscription_tier   | String(50)   | Уровень подписки                            | Default = 'basic' (basic, premium) |
+| created_at          | DateTime     | Дата и время создания записи                | Default = CURRENT_TIMESTAMP     |
+| last_active         | DateTime     | Дата и время последней активности           |                                 |
 
-## Объект PersonalityType (Тип личности)
+## Объект queries (Запрос)
 
-**Справочная сущность:** Содержит описание соционических типов
+**Основная сущность:** Хранит историю запросов пользователей для анализа текста
 
-| Атрибут | Тип | Описание | Ограничения |
-|---------|------|----------|-------------|
-| id | Integer | PK, Уникальный идентификатор | Auto Increment |
-| code | String | Код типа (e.g., "INTJ", "ESFP") | Not Null, Unique, Length=4 |
-| psycho_name | String | Психологическое название (e.g., "Аналитик") | Not Null |
+| Атрибут            | Тип          | Описание                                    | Ограничения                     |
+|--------------------|--------------|---------------------------------------------|---------------------------------|
+| id                 | Integer      | Уникальный идентификатор запроса            | Primary Key, Auto Increment     |
+| user_id            | Integer      | FK → users.id                               | Not Null                        |
+| original_text      | Text         | Исходный текст запроса                      | Not Null (e.g., "зеленеть")     |
+| processed_text     | Text         | Нормализованная версия текста               |                                 |
+| type               | String(50)   | Тип запроса                                 | Not Null ('word', 'sentence', 'phrase') |
+| analysis_mode      | String(50)   | Режим анализа                               | Not Null ('quick', 'full_analysis', 'etymology_only') |
+| parameters         | JSON         | Параметры анализа                           |                                 |
+| created_at         | DateTime     | Дата и время создания запроса               | Default = CURRENT_TIMESTAMP     |
 
-## Объект UserPersonality (Тип пользователя)
+## Объект analyses (Анализ)
 
-**Связующая сущность:** Связующая сущность: Связывает пользователя с его типом и хранит данные теста. Данные из этой сущности синхронизируются с Google Sheets
+**Основная сущность:** Хранит результаты анализа запросов
 
-| Атрибут | Тип | Описание | Ограничения |
-|---------|------|----------|-------------|
-| id | Integer | PK | Auto Increment |
-| user_id | Integer | FK → User.id | Not Null |
-| personality_type_id | Integer | FK → PersonalityType.id | Not Null |
-| determined_at | DateTime | Дата и время определения типа | Default = CURRENT_TIMESTAMP |
+| Атрибут                   | Тип          | Описание                                    | Ограничения                     |
+|---------------------------|--------------|---------------------------------------------|---------------------------------|
+| id                        | Integer      | Уникальный идентификатор анализа            | Primary Key, Auto Increment     |
+| query_id                  | Integer      | FK → queries.id                             | Not Null, Unique                |
+| morphological_analysis     | JSON         | Морфологический анализ                      | e.g., { "token": "зеленеть", "pos": "глагол", ... } |
+| etymological_analysis     | JSON         | Этимологический анализ                      | e.g., { "origin": "праслав. *zeleněti", ... } |
+| syntactic_analysis        | JSON         | Синтаксический анализ                       | Для предложений                 |
+| stylistic_recommendations  | Text         | Стилистические рекомендации                 |                                 |
+| confidence_score          | Float        | Уровень уверенности анализа                 | e.g., 0.9 (90% уверенности)     |
+| generated_report          | Text         | Полный текст отчета для пользователя        |                                 |
+| created_at                | DateTime     | Дата и время создания анализа               | Default = CURRENT_TIMESTAMP     |
 
-## Объект Chat (Чат/Группа)
+## Объект analysis_conflicts (Конфликты анализа)
 
-**Основная сущность:** Хранит данные о групповых чатах
+**Связующая сущность:** Хранит альтернативные интерпретации и конфликты анализа
 
-| Атрибут | Тип | Описание | Ограничения |
-|---------|------|----------|-------------|
-| id | Integer | PK | Auto Increment |
-| telegram_chat_id | BigInteger | Уникальный ID чата в Telegram | Not Null, Unique |
-| title | String | Название чата | Not Null |
+| Атрибут            | Тип          | Описание                                    | Ограничения                     |
+|--------------------|--------------|---------------------------------------------|---------------------------------|
+| id                 | Integer      | Уникальный идентификатор конфликта          | Primary Key, Auto Increment     |
+| analysis_id        | Integer      | FK → analyses.id                            | Not Null                        |
+| conflicting_field  | String(100)  | Поле с конфликтом                           | 'etymology', 'morphology'       |
+| alternative_value  | JSON         | Альтернативное значение                     | Not Null                        |
+| source             | String(255)  | Источник альтернативной интерпретации       | e.g., 'Исправный словарь X', 'Гипотеза пользователя Y' |
+| resolved           | Boolean      | Статус разрешения конфликта                 | Default = false                 |
 
-## Объект ChatMember (Участник чата)
+## Объект exports (Экспорт)
 
-**Связующая сущность:** Отслеживает участников групп
+**Сущность отчетности:** Хра dobbiamo il risultato dell’analisi esportato
 
-| Атрибут | Тип | Описание | Ограничения |
-|---------|------|----------|-------------|
-| id | Integer | PK | Auto Increment |
-| chat_id | Integer | FK → Chat.id | Not Null |
-| user_id | Integer | FK → User.id | Not Null |
+| Атрибут            | Тип          | Описание                                    | Ограничения                     |
+|--------------------|--------------|---------------------------------------------|---------------------------------|
+| id                 | Integer      | Уникальный идентификатор экспорта           | Primary Key, Auto Increment     |
+| analysis_id        | Integer      | FK → analyses.id                            | Not Null                        |
+| user_id            | Integer      | FK → users.id                               | Not Null                        |
+| format             | String(10)   | Формат экспорта                             | Not Null ('json', 'pdf')        |
+| file_id            | String(255)  | ID файла в Telegram                         |                                 |
+| storage_path       | Text         | Путь в файловом хранилище                   | e.g., S3, локально              |
+| created_at         | DateTime     | Дата и время создания экспорта              | Default = CURRENT_TIMESTAMP     |
 
-## Объект GroupReport (Отчет по группе)
+## Объект user_hypotheses (Гипотезы пользователей)
 
-**Сущность отчетности:** Хранит сгенерированные отчеты по чатам
+**Сущность краудсорсинга:** Хранит гипотезы пользователей для анализа слов
 
-| Атрибут | Тип | Описание | Ограничения |
-|---------|------|----------|-------------|
-| id | Integer | PK | Auto Increment |
-| chat_id | Integer | FK → Chat.id | Not Null |
-| generated_at | DateTime | Дата и время генерации отчета | Default = CURRENT_TIMESTAMP |
-| report_data | JSON/Text | Данные отчета (структурированный JSON или готовый текст) | Not Null |
-
-## Объект UserTestSession (Сессия тестирования)
-
-**Сущность процесса:** Для хранения состояния прохождения теста
-
-| Атрибут | Тип | Описание | Ограничения |
-|---------|------|----------|-------------|
-| id | Integer | PK | Auto Increment |
-| user_id | Integer | FK → User.id | Not Null |
-| current_question_id | Integer | FK → TestQuestion.id | Текущий вопрос |
-| status | String | Статус сессии ("in_progress", "completed", "expired", "cancelled") | Default = "in_progress" |
+| Атрибут            | Тип          | Описание                                    | Ограничения                     |
+|--------------------|--------------|---------------------------------------------|---------------------------------|
+| id                 | Integer      | Уникальный идентификатор гипотезы           | Primary Key, Auto Increment     |
+| user_id            | Integer      | FK → users.id                               | Not Null                        |
+| word               | String(255)  | Слово, к которому относится гипотеза        | Not Null                        |
+| hypothesis_text    | Text         | Текст гипотезы                              | Not Null                        |
+| status             | String(50)   | Статус гипотезы                             | Default = 'pending' (pending, accepted, rejected) |
+| reviewed_by        | Integer      | FK → users.id                               | Модератор (админ)               |
+| created_at         | DateTime     | Дата и время создания гипотезы              | Default = CURRENT_TIMESTAMP     |
 
 ---
 
 ## Бизнес-правила (Ограничения уровня данных)
 
-1.  **UserPersonality:**
-    *   У одного пользователя (`user_id`) может быть только одна активная запись типа личности
+1. **queries**:
+   * Каждый запрос (`id`) связан с одним пользователем (`user_id`).
+   * Поле `original_text` не может быть пустым.
 
-2.  **GroupReport:**
-    *   Для одного чата (`chat_id`) можно создать не более одного отчета в день (`DATE(generated_at)`)
+2. **analyses**:
+   * Каждый анализ (`id`) соответствует ровно одному запросу (`query_id`) (1:1 отношение).
+   * Поле `query_id` уникально.
 
-3.  **ChatMember:**
-    *   Комбинация `chat_id` и `user_id` должна быть уникальной
+3. **analysis_conflicts**:
+   * Конфликт (`id`) связан с одним анализом (`analysis_id`).
+   * Поле `alternative_value` не может быть пустым.
 
-4.  **UserTestSession:**
-    *   У пользователя может быть только одна активная сессия (`status = 'in_progress'`) в один момент времени
+4. **exports**:
+   * Экспорт (`id`) связан с одним анализом (`analysis_id`) и пользователем (`user_id`).
+   * Поле `format` обязательно и ограничено значениями 'json' или 'pdf'.
+
+5. **user_hypotheses**:
+   * Гипотеза (`id`) связана с одним пользователем (`user_id`) и может быть проверена другим пользователем (`reviewed_by`).
+   * Поля `word` и `hypothesis_text` не могут быть пустыми.
+   * Комбинация `user_id` и `word` должна быть уникальной, чтобы избежать дублирования гипотез для одного слова от одного пользователя.
 
 ## Связи (Relations)
 
-*   **User** `1 → ∞` **UserPersonality** (Один пользователь может иметь один тип личности)
-*   **User** `∞ → ∞` **Chat** (через **ChatMember**) (Пользователь может состоять во многих чатах, чат имеет много пользователей)
-*   **Chat** `1 → ∞` **GroupReport** (Для одного чата может быть сгенерировано много отчетов)
-*   **PersonalityType** `1 → ∞` **UserPersonality** (Один тип может быть присвоен многим пользователям)
+* **users** `1 → ∞` **queries** (Один пользователь может создать много запросов)
+* **queries** `1 → 1` **analyses** (Один запрос имеет ровно один анализ)
+* **analyses** `1 → ∞` **analysis_conflicts** (Один анализ может иметь много конфликтов)
+* **analyses** `1 → ∞` **exports** (Один анализ может быть экспортирован несколько раз)
+* **users** `1 → ∞` **exports** (Один пользователь может иметь много экспортов)
+* **users** `1 → ∞` **user_hypotheses** (Один пользователь может предложить много гипотез)
+* **users** `1 → ∞` **user_hypotheses** (через `reviewed_by`) (Один пользователь может проверить много гипотез)
