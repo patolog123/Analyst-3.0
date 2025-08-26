@@ -99,7 +99,7 @@
 | user_id | Integer | FK → User.id | Пользователь, запросивший прогноз | Not Null |
 | team_a_id | Integer | FK → Team.id | Первая команда | Not Null |
 | team_b_id | Integer | FK → Team.id | Вторая команда | Not Null |
-| match_id  | Integer | FK → Match.id| Ссылка на матч, для которого сделан прогноз | Nullable |
+| match_id  | Integer | FK → Match.id| Null |
 | predicted_winner_id | Integer | FK → Team.id | Предсказанный победитель | |
 | confidence_a | Decimal | Уверенность в победе команды A (0-1) | Not Null |
 | confidence_b | Decimal | Уверенность в победе команды B (0-1) | Not Null |
@@ -214,5 +214,6 @@
 *   **Patch** `1 → ∞` **Match** (В одном патче сыграно много матчей)
 *   **Match** `1 → 2` **TeamMatchStats** (Один матч имеет две записи статистики - по команде)
 *   **Prediction** `0..1 → 1` **Match** (Прогноз может быть связан с фактическим матчем post-factum)
+
 
 
