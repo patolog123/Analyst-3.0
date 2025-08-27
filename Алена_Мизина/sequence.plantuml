@@ -25,7 +25,7 @@ TelegramBot -> TelegramServer : Отправляет /start
 activate TelegramServer
 Backend -> TelegramServer : HTTP-запрос GET /getUpdates?offset=100&timeout=30
 activate Backend
-TelegramServer -> Backend : Ответ на /getUpdates:\n[{"update_id": 100, "message": start}]
+TelegramServer --> Backend : Ответ на /getUpdates:\n[{"update_id": 100, "message": start}]
 Backend -> TelegramServer : Отправляет приветственное сообщение
 deactivate Backend
 TelegramServer -> TelegramBot: Доставляет сообщение пользователю
@@ -42,7 +42,7 @@ TelegramBot -> TelegramServer : Передает данные пользоват
 activate TelegramServer
 Backend -> TelegramServer : HTTP-запрос GET /getUpdates?offset=101&timeout=30
 activate Backend
-TelegramServer -> Backend : Ответ на /getUpdates:\n[{"update_id": 101, "message": .......}]
+TelegramServer --> Backend : Ответ на /getUpdates:\n[{"update_id": 101, "message": .......}]
 Backend -> TelegramServer : Отправляет сообщение о необходимости ожидания
 TelegramServer -> TelegramBot : Пересылает сообщение пользователю
 deactivate TelegramServer
