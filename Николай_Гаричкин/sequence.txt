@@ -1,0 +1,31 @@
+@startuml
+
+autonumber
+
+actor User
+participant frontend
+participant backend
+participant LLM
+database DB
+
+activate User
+User->frontend: отправил сообщение
+activate frontend
+
+frontend->backend: http-запрос
+activate backend
+
+backend->backend: валидация данных
+backend->DB: SQL-запрос на получение данных
+activate DB
+
+DB-->backend: Возвращает набор данных
+deactivate DB
+
+backend-->frontend: Возвращает json с ответом
+deactivate backend
+
+frontend-->User: Отображает ответ
+deactivate frontend
+
+@enduml
