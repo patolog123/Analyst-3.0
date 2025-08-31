@@ -1,26 +1,31 @@
 ```mermaid
 sequenceDiagram
     actor User
-    participant Telegram
+    participant TelegramServer
+    participant TelegramBot
     participant Backend
     participant GoogleSheets
     participant SQLite
     participant LLM
     participant RAG
 
-    Note over User, RAG: Сценарий /test
-    User->>Telegram: /test
-    Telegram->>Backend: Команда /test
+    Note over User, RAG: Cценарий /test
+    User->>TelegramServer: /test
+    TelegramServer->>TelegramBot: Передать сообщение
+    TelegramBot->>Backend: Команда /test
     Backend->>GoogleSheets: Проверить тип пользователя
     GoogleSheets-->>Backend: Тип не найден
-    Backend->>Telegram: Начать тестирование
-    Telegram->>User: Правила теста
+    Backend->>TelegramBot: Начать тестирование
+    TelegramBot->>TelegramServer: Отправить правила теста
+    TelegramServer->>User: Правила теста
     
     loop 10 вопросов
-        Backend->>Telegram: Отправить вопрос
-        Telegram->>User: Вопрос
-        User->>Telegram: Ответ (≤500 символов)
-        Telegram->>Backend: Ответ пользователя
+        Backend->>TelegramBot: Отправить вопрос
+        TelegramBot->>TelegramServer: Передать вопрос
+        TelegramServer->>User: Вопрос
+        User->>TelegramServer: Ответ (≤500 символов)
+        TelegramServer->>TelegramBot: Передать ответ
+        TelegramBot->>Backend: Ответ пользователя
         Backend->>Backend: Сохранить ответ
     end
     
@@ -29,25 +34,33 @@ sequenceDiagram
     RAG-->>LLM: Данные шаблонов
     LLM-->>Backend: Результат анализа
     Backend->>GoogleSheets: Сохранить тип личности
-    Backend->>Telegram: Отправить результат
-    Telegram->>User: Отчет с типом личности
+    Backend->>TelegramBot: Отправить результат
+    TelegramBot->>TelegramServer: Передать отчет
+    TelegramServer->>User: Отчет с типом личности
 
-    Note over User, RAG: Сценарий /report
-    User->>Telegram: /report
-    Telegram->>Backend: Команда /report
+    Note over User, RAG: Cценарий /report
+    User->>TelegramServer: /report
+    TelegramServer->>TelegramBot: Передать команду
+    TelegramBot->>Backend: Команда /report
     Backend->>SQLite: Проверить последний отчет
     SQLite-->>Backend: Отчетов сегодня не было
-    Backend->>Telegram: Получить состав группы
-    Telegram-->>Backend: Список участников
+    Backend->>TelegramBot: Запрос состава группы
+    TelegramBot->>TelegramServer: Запрос через API
+    TelegramServer-->>TelegramBot: Список участников
+    TelegramBot-->>Backend: Список участников
     Backend->>GoogleSheets: Проверить % протестированных
     GoogleSheets-->>Backend: >70% протестированных
-    Backend->>Telegram: Получить историю сообщений 
-    Telegram-->>Backend: История сообщений
+    Backend->>TelegramBot: Запрос истории сообщений
+    TelegramBot->>TelegramServer: Запрос через API
+    TelegramServer-->>TelegramBot: История сообщений
+    TelegramBot-->>Backend: История сообщений
     Backend->>LLM: Проанализировать данные
     LLM->>RAG: Получить шаблоны взаимодействия
     RAG-->>LLM: Данные шаблонов
     LLM-->>Backend: Результат анализа
     Backend->>SQLite: Сохранить отчет
-    Backend->>Telegram: Отправить отчет
-    Telegram->>User: Групповой отчет
+    Backend->>TelegramBot: Отправить отчет
+    TelegramBot->>TelegramServer: Передать отчет
+    TelegramServer->>User: Групповой отчет
+
 ```
