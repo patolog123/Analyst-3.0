@@ -1,5 +1,6 @@
 ```mermaid
 sequenceDiagram
+    autonumber
     actor User
     participant Telegram-Bot
     participant Telegram-Server
