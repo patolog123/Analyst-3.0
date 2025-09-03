@@ -9,8 +9,6 @@
 |  | username | String | Имя пользователя в Telegram |
 |  | first_name | String | Имя пользователя |
 |  | default_currency | String | Валюта по умолчанию для операций (по умолчанию "RUB") |
-|  | monthly_budget | Float | Месячный бюджет пользователя (опционально) |
-
 ---
 
 ## Объект Category
