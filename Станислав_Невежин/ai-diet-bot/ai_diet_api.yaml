@@ -1,0 +1,505 @@
+openapi: 3.0.0
+info:
+  title: AI Diet Bot API
+  description: REST API для AI Diet Bot 3.0 - системы генерации планов питания для спортсменов
+  version: 1.0.0
+  contact:
+    name: AI Diet Bot Team
+    email: support@aidietbot.com
+
+servers:
+  - url: https://ai-diet-bot-snevezhin.amvera.io/api
+    description: Продакшен сервер (Amvera)
+  - url: http://0.0.0.0:8080/api
+    description: Локальный сервер разработки
+
+tags:
+  - name: Users
+    description: Управление пользователями
+  - name: Meal Plans
+    description: Генерация и управление планами питания
+  - name: Workouts
+    description: Данные о тренировках
+  - name: Activities
+    description: Данные о физической активности
+  - name: Health
+    description: Проверка здоровья сервиса
+
+paths:
+  /health:
+    get:
+      summary: Проверка здоровья сервиса
+      tags: [Health]
+      responses:
+        '200':
+          description: Сервис работает корректно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+
+  /users:
+    post:
+      summary: Создание нового пользователя
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Пользователь успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Неверные данные пользователя
+        '409':
+          description: Пользователь уже существует
+
+    get:
+      summary: Получение списка пользователей
+      tags: [Users]
+      parameters:
+        - name: limit
+          in: query
+          description: Лимит пользователей
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          description: Смещение
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /users/{telegram_id}:
+    get:
+      summary: Получение пользователя по Telegram ID
+      tags: [Users]
+      parameters:
+        - name: telegram_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID пользователя в Telegram
+      responses:
+        '200':
+          description: Данные пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Пользователь не найден
+
+  /meal-plans:
+    post:
+      summary: Генерация плана питания
+      tags: [Meal Plans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealPlanGenerateRequest'
+      responses:
+        '201':
+          description: План питания успешно сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+        '400':
+          description: Неверные данные для генерации
+        '404':
+          description: Пользователь не найден
+
+    get:
+      summary: Получение планов питания пользователя
+      tags: [Meal Plans]
+      parameters:
+        - name: telegram_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID пользователя в Telegram
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Список планов питания
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MealPlanSummary'
+
+  /meal-plans/{plan_id}:
+    get:
+      summary: Получение детальной информации о плане питания
+      tags: [Meal Plans]
+      parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID плана питания
+      responses:
+        '200':
+          description: Детальная информация о плане
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlanDetail'
+        '404':
+          description: План питания не найден
+
+  /workouts:
+    post:
+      summary: Сохранение данных о тренировках
+      tags: [Workouts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutData'
+      responses:
+        '201':
+          description: Данные о тренировках сохранены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workout_id:
+                    type: integer
+                    example: 123
+                  message:
+                    type: string
+                    example: "Workout data saved successfully"
+        '400':
+          description: Неверные данные тренировки
+        '404':
+          description: Пользователь не найден
+
+  /activities:
+    post:
+      summary: Сохранение данных о физической активности
+      tags: [Activities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityData'
+      responses:
+        '201':
+          description: Данные об активности сохранены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activity_id:
+                    type: integer
+                    example: 456
+                  message:
+                    type: string
+                    example: "Activity data saved successfully"
+        '400':
+          description: Неверные данные активности
+        '404':
+          description: Пользователь не найден
+
+components:
+  schemas:
+    UserCreate:
+      type: object
+      required:
+        - telegram_id
+        - name
+        - gender
+        - height
+        - current_weight
+        - target_weight
+        - competition_date
+      properties:
+        telegram_id:
+          type: integer
+          description: ID пользователя в Telegram
+          example: 123456789
+        name:
+          type: string
+          description: Имя пользователя
+          example: "Иван Иванов"
+        gender:
+          type: string
+          enum: [M, F]
+          description: Пол пользователя
+          example: "M"
+        height:
+          type: number
+          format: float
+          description: Рост в см
+          example: 180.5
+        current_weight:
+          type: number
+          format: float
+          description: Текущий вес в кг
+          example: 85.2
+        target_weight:
+          type: number
+          format: float
+          description: Целевой вес в кг
+          example: 80.0
+        competition_date:
+          type: string
+          format: date
+          description: Дата соревнований
+          example: "2024-06-15"
+
+    User:
+      type: object
+      properties:
+        athlete_id:
+          type: integer
+          example: 1
+        telegram_id:
+          type: integer
+          example: 123456789
+        name:
+          type: string
+          example: "Иван Иванов"
+        gender:
+          type: string
+          example: "M"
+        height:
+          type: number
+          example: 180.5
+        current_weight:
+          type: number
+          example: 85.2
+        target_weight:
+          type: number
+          example: 80.0
+        competition_date:
+          type: string
+          format: date
+          example: "2024-06-15"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    MealPlanGenerateRequest:
+      type: object
+      required:
+        - telegram_id
+      properties:
+        telegram_id:
+          type: integer
+          description: ID пользователя в Telegram
+          example: 123456789
+
+    MealPlan:
+      type: object
+      properties:
+        plan_id:
+          type: integer
+          example: 1
+        athlete_id:
+          type: integer
+          example: 1
+        plan_date:
+          type: string
+          format: date
+          example: "2024-01-16"
+        plan_name:
+          type: string
+          example: "План на 16.01.2024"
+        total_calories:
+          type: number
+          example: 2500
+        total_proteins:
+          type: number
+          example: 150
+        total_fats:
+          type: number
+          example: 70
+        total_carbs:
+          type: number
+          example: 300
+        meals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Meal'
+
+    MealPlanSummary:
+      type: object
+      properties:
+        plan_id:
+          type: integer
+          example: 1
+        plan_date:
+          type: string
+          format: date
+          example: "2024-01-16"
+        plan_name:
+          type: string
+          example: "План на 16.01.2024"
+        total_calories:
+          type: number
+          example: 2500
+
+    MealPlanDetail:
+      type: object
+      properties:
+        plan_id:
+          type: integer
+          example: 1
+        athlete_id:
+          type: integer
+          example: 1
+        plan_date:
+          type: string
+          format: date
+          example: "2024-01-16"
+        plan_name:
+          type: string
+          example: "План на 16.01.2024"
+        total_calories:
+          type: number
+          example: 2500
+        total_proteins:
+          type: number
+          example: 150
+        total_fats:
+          type: number
+          example: 70
+        total_carbs:
+          type: number
+          example: 300
+        meals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Meal'
+
+    Meal:
+      type: object
+      properties:
+        meal_id:
+          type: integer
+          example: 1
+        meal_type:
+          type: string
+          enum: [breakfast, lunch, dinner, snack]
+          example: "breakfast"
+        description:
+          type: string
+          example: "Овсянка с бананом и орехами"
+        calories:
+          type: number
+          example: 400
+        proteins:
+          type: number
+          example: 15
+        fats:
+          type: number
+          example: 10
+        carbs:
+          type: number
+          example: 60
+
+    WorkoutData:
+      type: object
+      required:
+        - telegram_id
+        - sessions_per_week
+        - exercises
+      properties:
+        telegram_id:
+          type: integer
+          example: 123456789
+        sessions_per_week:
+          type: integer
+          example: 4
+        exercises:
+          type: string
+          example: "Приседания, жим лежа, становая тяга"
+        equipment_weight:
+          type: number
+          example: 80.5
+        reps:
+          type: integer
+          example: 12
+        sets:
+          type: integer
+          example: 4
+
+    ActivityData:
+      type: object
+      required:
+        - telegram_id
+        - steps_per_day
+        - work_type
+      properties:
+        telegram_id:
+          type: integer
+          example: 123456789
+        steps_per_day:
+          type: integer
+          example: 10000
+        work_type:
+          type: string
+          example: "сидячая"
+        additional_activity:
+          type: string
+          example: "плавание"
+        activity_hours:
+          type: number
+          example: 3.5
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API ключ для доступа к сервису
+
+security:
+  - ApiKeyAuth: []
