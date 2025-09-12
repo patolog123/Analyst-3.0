@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: Marketing Statistics API
+  description: |
+    API для получения маркетинговой статистики по клиентам и услугам.
+    Позволяет получить данные о записях услуг компании за указанный период.
+  version: '1.0.0'
+servers:
+  - url: https://api.yclients.com/api/v1
+    description: Production server
+tags:
+  - name: records
+    description: Операции с записями услуг
+paths:
+  /records/{company_id}:
+    get:
+      tags:
+        - records
+      summary: Получить записи услуг компании за период
+      description: Возвращает список услуг и связанных данных за указанный период времени.
+      security:
+        - YClientsAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AcceptHeader'
+        - $ref: '#/components/parameters/ContentTypeHeader'
+        - name: company_id
+          in: path
+          required: true
+          description: Уникальный идентификатор компании
+          schema:
+            type: integer
+            example: 81435
+        - name: start_date
+          in: query
+          required: true
+          description: Начальная дата выборки в формате YYYY-MM-DD
+          schema:
+            type: string
+            format: date
+            example: 2025-06-01
+        - name: end_date
+          in: query
+          required: true
+          description: Конечная дата выборки в формате YYYY-MM-DD
+          schema:
+            type: string
+            format: date
+            example: 2025-06-30
+      responses:
+        '200':
+          description: Успешный ответ с данными услуг
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  services:
+                    type: array
+                    description: Массив услуг
+                    items:
+                      $ref: '#/components/schemas/Service'
+              examples:
+                example-1:
+                  summary: Пример успешного ответа
+                  value:
+                    success: true
+                    services:
+                      - id: 123
+                        title: "Консультация"
+                        cost: 1500.50
+                        amount: 10
+                        staff:
+                          id: 456
+                          name: "Иван Иванов"
+                          specialization: "Терапевт"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 400
+                message: "Неверный формат даты"
+        '404':
+          description: Компания не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 404
+                message: "Компания с указанным ID не найдена"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 500
+                message: "Внутренняя ошибка сервера"
+components:
+  securitySchemes:
+    YClientsAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        Авторизация в API YClients.
+        Передавайте токены в формате:
+        `Bearer {Bearer_Token}, {User_token}`
+
+  parameters:
+    AcceptHeader:
+      name: Accept
+      in: header
+      required: true
+      schema:
+        type: string
+        example: application/vnd.yclients.v2+json
+      description: Формат ответа от API (всегда `application/vnd.yclients.v2+json`)
+
+    ContentTypeHeader:
+      name: Content-Type
+      in: header
+      required: true
+      schema:
+        type: string
+        example: application/json
+      description: Тип передаваемых данных (всегда `application/json`)
+
+  schemas:
+    Service:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор услуги
+          example: 123
+        title:
+          type: string
+          description: Название услуги
+          example: "Консультация"
+        cost:
+          type: number
+          format: float
+          description: Стоимость услуги
+          example: 1500.50
+        amount:
+          type: integer
+          description: Количество оказанной услуги
+          example: 10
+        staff:
+          $ref: '#/components/schemas/Staff'
+    Staff:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор сотрудника
+          example: 456
+        name:
+          type: string
+          description: ФИО специалиста
+          example: "Иван Иванов"
+        specialization:
+          type: string
+          description: Специализация сотрудника
+          example: "Терапевт"
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: Код ошибки
+          example: 400
+        message:
+          type: string
+          description: Описание ошибки
+          example: "Ошибка запроса"
