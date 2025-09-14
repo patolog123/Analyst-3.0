@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Personal Planner API",
-    "description": "API для управления пользователями, целями и событиями планировщика",
+    "title": "ai_agent_assistant_bot",
+    "description": "Спецификация REST API для бота-планировщика",
     "version": "1.0.0"
   },
   "servers": [
