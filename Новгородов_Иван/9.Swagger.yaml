@@ -1,0 +1,456 @@
+openapi: 3.0.3
+info:
+  title: AI-Book Bot API
+  description: |
+    REST API для Telegram-бота "AI-Book", который предоставляет персональные рекомендации книг на основе предпочтений пользователя.
+  version: 1.0.0
+servers:
+  - url: https://openrouter.ai/deepseek/deepseek-chat-v3.1/api
+    description: Основной сервер API
+
+tags:
+  - name: Users
+    description: Управление пользователями и их профилями
+  - name: Recommendations
+    description: Сервис получения и сохранения рекомендаций
+  - name: Content
+    description: Работа с каталогом книг, авторов и жанров
+  - name: Logs
+    description: Получение журнала активности пользователя
+  - name: Telegram
+    description: Запросы к Telegram Bot API
+
+paths:
+  /users/{telegramId}:
+    get:
+      summary: Получение информации о пользователе
+      tags:
+        - Users
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "404":
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /users:
+    post:
+      summary: Регистрация нового пользователя
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistrationRequest"
+      responses:
+        "201":
+          description: Пользователь успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRegistrationResponse"
+
+  /users/{userId}/recommendations:
+    post:
+      summary: Сохранение рекомендаций на день
+      tags:
+        - Recommendations
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecommendationRequest"
+      responses:
+        "200":
+          description: Рекомендации успешно сохранены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationResponse"
+
+  /recommendations/get:
+    post:
+      summary: Получение персональных рекомендаций
+      tags:
+        - Recommendations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  description: ID пользователя
+                k:
+                  type: integer
+                  description: Количество книг в выдаче (максимум 5)
+      responses:
+        "200":
+          description: Список рекомендаций
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookRecommendation"
+        "400":
+          description: Ошибка валидации
+        "500":
+          description: Ошибка сервера
+
+  /books:
+    get:
+      summary: Поиск и получение списка книг с фильтрацией
+      tags:
+        - Content
+      parameters:
+        - name: title
+          in: query
+          description: Название книги для поиска
+          schema:
+            type: string
+        - name: author
+          in: query
+          description: Имя автора для поиска
+          schema:
+            type: string
+        - name: genre
+          in: query
+          description: Жанр для фильтрации
+          schema:
+            type: string
+        - name: year
+          in: query
+          description: Год публикации
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Список книг
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Book"
+
+  /books/{bookId}:
+    get:
+      summary: Получение информации о книге по ID
+      tags:
+        - Content
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Детали книги
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+        "404":
+          description: Книга не найдена
+
+  /books/{bookId}/rate:
+    post:
+      summary: Сохранение реакции пользователя на книгу
+      tags:
+        - Content
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  description: ID пользователя
+                action:
+                  type: string
+                  description: Действие пользователя (like, hide)
+                  enum: [like, hide]
+      responses:
+        "200":
+          description: Реакция сохранена
+
+  /authors:
+    get:
+      summary: Получение списка авторов
+      tags:
+        - Content
+      parameters:
+        - name: name
+          in: query
+          description: Имя автора для поиска
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Список авторов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Author"
+
+  /genres:
+    get:
+      summary: Получение списка жанров
+      tags:
+        - Content
+      responses:
+        "200":
+          description: Список жанров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Genre"
+
+  /tags:
+    get:
+      summary: Получение списка тегов
+      tags:
+        - Content
+      responses:
+        "200":
+          description: Список тегов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+
+  /users/{telegram_id}/logs:
+    get:
+      summary: Получение журнала активности пользователя
+      tags:
+        - Logs
+      parameters:
+        - name: telegram_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Номер страницы для пагинации
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: Количество записей на странице
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Список записей в журнале
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LogEntry"
+        "404":
+          description: Пользователь не найден
+
+components:
+  schemas:
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ID пользователя в БД
+        telegramId:
+          type: integer
+          description: ID в Telegram
+        username:
+          type: string
+          description: Никнейм
+        firstName:
+          type: string
+        lastName:
+          type: string
+        lang:
+          type: string
+        preferredGenres:
+          type: array
+          items:
+            type: string
+        preferredAuthors:
+          type: array
+          items:
+            type: string
+
+    UserRegistrationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        lang:
+          type: string
+        preferredGenres:
+          type: array
+          items:
+            type: string
+        preferredAuthors:
+          type: array
+          items:
+            type: string
+
+    UserRegistrationResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+        username:
+          type: string
+        status:
+          type: string
+          enum: [ok, error]
+
+    RecommendationRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: Дата, на которую сохраняется рекомендация
+        recommendation_text:
+          type: string
+          description: Текст рекомендации
+
+    RecommendationResponse:
+      type: object
+      properties:
+        recommendationId:
+          type: integer
+
+    BookRecommendation:
+      type: object
+      properties:
+        bookTitle:
+          type: string
+        reason:
+          type: string
+          description: Пояснение, почему книга была рекомендована
+        rank:
+          type: integer
+
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        authors:
+          type: array
+          items:
+            type: string
+        year:
+          type: integer
+        language:
+          type: string
+        genres:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        coverUrl:
+          type: string
+        rating:
+          type: number
+          format: float
+
+    Author:
+      type: object
+      properties:
+        name:
+          type: string
+        bio:
+          type: string
+        birthYear:
+          type: integer
+        country:
+          type: string
+
+    Genre:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+
+    Tag:
+      type: object
+      properties:
+        name:
+          type: string
+
+    LogEntry:
+      type: object
+      properties:
+        logId:
+          type: integer
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [success, error]
+

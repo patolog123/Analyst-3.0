@@ -1,0 +1,160 @@
+openapi: 3.0.0
+info:
+  title: AI-Agent
+  version: 1.0.0
+  description: "API для анализа чатов Авито с использованием ИИ"
+
+servers:
+  - url: https://ai-agent-zelenkow.amvera.io/docs
+
+tags:
+  - name: User
+
+paths:
+  /webhook:
+    post:
+      tags:
+        - User
+      summary: Telegram Webhook
+      description: "Получение Webhook-ов от Telegram"
+      operationId: telegram_webhook_webhook_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+  /sync/avito:
+    post:
+      tags:
+        - User
+      summary: Trigger Avito Sync
+      description: "Запуск синхронизации данных с Авито"
+      operationId: trigger_avito_sync_sync_avito_post
+      parameters:
+        - name: apikey
+          in: header
+          required: true
+          schema:
+            type: string
+            title: Apikey
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+
+  /llm/analyze:
+    post:
+      tags:
+        - User
+      summary: Trigger Llm Analyze
+      description: "Запуск анализа чатов через DeepSeek AI"
+      operationId: trigger_llm_analyze_llm_analyze_post
+      parameters:
+        - name: apikey
+          in: header
+          required: true
+          schema:
+            type: string
+            title: Apikey
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+
+  /timer/reports:
+    post:
+      tags:
+        - User
+      summary: Trigger Timer Reports
+      description: "Отправка отчетов за прошлый день"
+      operationId: trigger_timer_reports_timer_reports_post
+      parameters:
+        - name: apikey
+          in: header
+          required: true
+          schema:
+            type: string
+            title: Apikey
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      title: ValidationError

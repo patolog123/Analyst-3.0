@@ -1,0 +1,157 @@
+openapi: 3.0.3
+info:
+  title: Hair-Components Analyzer API
+  version: "1.0.0"
+  description: >
+    Сервис проверки доступности и анализа состава по текстовому описанию.
+    Спецификация составлена по документу "8 REST.docx". 
+servers:
+  - url: https://api.example.com
+    description: Production
+  - url: http://localhost:8000
+    description: Local
+
+paths:
+  /ping:
+    get:
+      summary: Проверка доступности сервиса
+      operationId: ping
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PingResponse"
+              examples:
+                ok:
+                  value: { ok: true }
+
+  /analyze/text:
+    post:
+      summary: Анализ состава по текстовому описанию
+      operationId: analyzeText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  description: Текст с перечнем ингредиентов или описанием средства
+      responses:
+        "200":
+          description: Успешный анализ (JSON-схема по умолчанию)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResponse"
+        "400":
+          description: Bad Request — ошибка входного текста
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "422":
+          description: Validation Error — ошибки валидации входных данных
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "500":
+          description: Internal Server Error — внутренняя ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "503":
+          description: Service Unavailable — сервис временно недоступен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+
+components:
+  schemas:
+    PingResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+          description: Признак доступности сервиса
+
+    Ingredient:
+      type: object
+      required:
+        [ name, category, stated_conc_pct, sufficiency, effects, notes ]
+      properties:
+        name:
+          type: string
+          description: Название ингредиента
+        category:
+          type: string
+          description: Категория (например, surfactant, preservative)
+        stated_conc_pct:
+          type: number
+          nullable: true
+          description: Указанный % концентрации (или null)
+        sufficiency:
+          type: string
+          description: Оценка достаточности
+          enum: [enough, low, unknown]
+        effects:
+          type: array
+          items:
+            type: string
+          description: Выявленные эффекты
+        notes:
+          type: array
+          items:
+            type: string
+          description: Дополнительные примечания
+
+    AnalysisResponse:
+      type: object
+      required:
+        [ parsed_ingredients, active_count, warnings, overall_verdict, summary ]
+      properties:
+        parsed_ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ingredient"
+          description: Распознанные ингредиенты
+        active_count:
+          type: number
+          description: Количество активных компонентов
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Замечания/риски
+        overall_verdict:
+          type: string
+          description: Итоговый вывод
+        summary:
+          type: string
+          description: Краткое резюме анализа
+
+    ValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          description: Детали ошибки валидации входных данных
+          items:
+            type: object
+            additionalProperties: true
+
+    ErrorMessage:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Сообщение об ошибке

@@ -1,0 +1,257 @@
+openapi: 3.0.0
+info:
+  title: AIHR-Bot API
+  description: API для управления резюме, вакансиями и результатами анализа из AIHR Telegram-бота
+  version: 1.0.0
+servers:
+  - url: https://AIHR.com
+    description: Production server
+
+tags:
+  - name: Resumes
+    description: Управление резюме пользователей
+  - name: Vacancies
+    description: Управление вакансиями
+  - name: Analysis
+    description: Запуск анализа и получение результатов
+
+paths:
+
+  # Резюме
+  /resumes:
+    get:
+      tags: [Resumes]
+      summary: Получить список всех резюме пользователя
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: integer
+          required: true
+          description: ID пользователя в Telegram
+      responses:
+        '200':
+          description: Успешный запрос. Возвращает список резюме.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resume'
+        '404':
+          description: Резюме не найдены
+
+    post:
+      tags: [Resumes]
+      summary: Загрузить новое резюме
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: ID пользователя в Telegram
+                file:
+                  type: string
+                  format: binary
+                  description: Файл резюме (PDF/DOCX)
+      responses:
+        '201':
+          description: Резюме успешно загружено и сохранено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+        '400':
+          description: Неверный формат файла или превышен размер
+
+  /resumes/{resume_id}:
+    get:
+      tags: [Resumes]
+      summary: Получить информацию о конкретном резюме
+      parameters:
+        - in: path
+          name: resume_id
+          required: true
+          schema:
+            type: integer
+          description: ID резюме
+      responses:
+        '200':
+          description: Успешный запрос.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+        '404':
+          description: Резюме не найдено
+
+    delete:
+      tags: [Resumes]
+      summary: Удалить резюме
+      parameters:
+        - in: path
+          name: resume_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Резюме успешно удалено
+        '404':
+          description: Резюме не найдено
+
+  # Вакансии
+  /vacancies:
+    get:
+      tags: [Vacancies]
+      summary: Получить список вакансий пользователя
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vacancy'
+
+    post:
+      tags: [Vacancies]
+      summary: Создать новую вакансию
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyCreate'
+      responses:
+        '201':
+          description: Вакансия успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vacancy'
+
+  # Анализ
+  /analyze:
+    post:
+      tags: [Analysis]
+      summary: Запустить анализ резюме против вакансии
+      description: |
+        Отправляет запрос в AI (DeepSeek) для анализа соответствия резюме вакансии.
+        Возвращает результаты оценки.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalysisRequest'
+      responses:
+        '202':
+          description: Анализ запущен. Возвращаются результаты.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+        '400':
+          description: Недостаточно данных для анализа
+
+components:
+  schemas:
+
+    Resume:
+      type: object
+      properties:
+        resume_id:
+          type: integer
+          description: Уникальный ID резюме в БД
+        original_name:
+          type: string
+          example: "My_CV.pdf"
+        file_size:
+          type: integer
+          description: Размер файла в байтах
+        uploaded_at:
+          type: string
+          format: date-time
+        uploaded_by_id:
+          type: integer
+          description: ID пользователя, загрузившего резюме
+
+    VacancyCreate:
+      type: object
+      required:
+        - hr_user_id
+        - description
+      properties:
+        hr_user_id:
+          type: integer
+          description: ID пользователя в Telegram
+        title:
+          type: string
+          example: "Junior Python Developer"
+          description: Название вакансии (опционально)
+        description:
+          type: string
+          description: Текст описания вакансии
+
+    Vacancy:
+      allOf:
+        - $ref: '#/components/schemas/VacancyCreate'
+        - type: object
+          properties:
+            vacancy_id:
+              type: integer
+            created_at:
+              type: string
+              format: date-time
+
+    AnalysisRequest:
+      type: object
+      required:
+        - vacancy_id
+        - resume_ids
+      properties:
+        vacancy_id:
+          type: integer
+          description: ID вакансии из БД
+        resume_ids:
+          type: array
+          items:
+            type: integer
+          description: Список ID резюме для анализа
+
+    AnalysisResponse:
+      type: object
+      properties:
+        analysis_id:
+          type: string
+        status:
+          type: string
+          example: "completed"
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchResult'
+
+    MatchResult:
+      type: object
+      properties:
+        resume_id:
+          type: integer
+        score:
+          type: integer
+          description: Оценка соответствия от 0 до 100
+        details:
+          type: string
+          description: Пояснение от AI

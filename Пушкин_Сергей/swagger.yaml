@@ -1,0 +1,118 @@
+openapi: 3.0.4
+info:
+  title: Swagger Новости предприятий - OpenAPI 3.0
+  description: |
+    Описание документации 
+  termsOfService: https://swagger.io/terms
+  contact:
+    email: apiteam@swagger.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.12
+externalDocs:
+  description: Find out more about Swagger
+  url: https://swagger.io
+servers:
+  - url: http://events_corp/api
+tags:
+  - name: User
+    description: Группа методов для работы с пользователями
+  - name: Company
+    description: Группа методов для работы с компаниями
+  - name: Subscription
+    description: Группа методов для работы с подписками
+  - name: Event
+    description: Группа методов для работы с событиями
+paths:
+  /users:
+    post:
+      tags:
+        - User
+      summary: Создание пользователя
+      description: Создание пользователя, который зарегистрировался в Телеграм-канале
+      requestBody:
+        description: Параметры метода для создания пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Invalid body
+        '500':
+          description: Server error
+  /companies:
+    get:
+      summary: получение списка компаний
+      description: получение списка компаний по запросу пользователя
+      parametrs:
+        - name: company_name
+          in: query
+          description: поиск по названию
+          required: true
+          schema:
+            type: string
+        - name: company_industry
+          in: query
+          description: поиск по индустрии
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '400':
+          description: Invalid body
+        '500':
+          description: Server error
+
+
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - user_name
+      properties:
+        user_name:
+          type: string
+          example: Сергей
+          description: Имя пользователя
+    Company:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Код ответа
+        user_id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор пользователя
+        message:
+          type: string
+          description: Сообщение ответа
+    Response:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Код ответа
+        company_name:
+          type: string
+          format: array
+          description: наименования предприятий
+        company_industry:
+          type: array
+          description: принадлежность к отраслям
