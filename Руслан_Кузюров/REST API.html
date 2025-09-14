@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST API Документация - Birthday Bot</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            padding: 10px;
+            background: #ecf0f1;
+            border-left: 4px solid #3498db;
+        }
+        h3 {
+            color: #2c3e50;
+            margin-top: 20px;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #e74c3c;
+            margin: 15px 0;
+        }
+        .method {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: white;
+            margin-right: 10px;
+        }
+        .get { background-color: #27ae60; }
+        .post { background-color: #f39c12; }
+        .put { background-color: #3498db; }
+        .delete { background-color: #e74c3c; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 2px solid #34495e;
+            padding: 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e8f4f8;
+        }
+        .required {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .optional {
+            color: #7f8c8d;
+        }
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .response-code {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: white;
+            margin: 10px 0;
+        }
+        .success { background-color: #27ae60; }
+        .error { background-color: #e74c3c; }
+        .info { background-color: #3498db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>REST API Документация - Birthday Bot</h1>
+        
+        <h2>1. Получение всех дней рождения пользователя</h2>
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <strong>/v1/users/{userId}/birthdays</strong>
+            <p>Получение всех дней рождения определенного пользователя</p>
+        </div>
+
+        <h3>Request</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>userId</td>
+                    <td>int</td>
+                    <td>path</td>
+                    <td>Уникальный идентификатор пользователя (chat_id)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Response</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>userId</td>
+                    <td>int</td>
+                    <td>body</td>
+                    <td>Уникальный идентификатор пользователя</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birthdays</td>
+                    <td>array</td>
+                    <td>body</td>
+                    <td>Массив дней рождения</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birthday</td>
+                    <td>object</td>
+                    <td>body</td>
+                    <td>Объект дня рождения</td>
+                    <td><span class="optional">нет</span></td>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>int</td>
+                    <td>body</td>
+                    <td>Уникальный идентификатор дня рождения</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>name</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Имя человека</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birth_date</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дата рождения (YYYY-MM-DD)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>info</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дополнительная информация о человеке</td>
+                    <td><span class="optional">нет</span></td>
+                </tr>
+                <tr>
+                    <td>created_at</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дата создания записи</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>updated_at</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дата последнего обновления</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="response-code success">Response code: 200</div>
+    </div>
+        <div class="endpoint">
+            <span class="method post">POST</span>
+            <strong>/v1/users/{userId}/birthdays</strong>
+            <p>Добавление нового дня рождения для пользователя</p>
+        </div>
+
+        <h3>Request</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>userId</td>
+                    <td>int</td>
+                    <td>path</td>
+                    <td>Уникальный идентификатор пользователя (chat_id)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>name</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Имя человека</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birth_date</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дата рождения (YYYY-MM-DD)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>info</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дополнительная информация о человеке</td>
+                    <td><span class="optional">нет</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Response</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>success</td>
+                    <td>boolean</td>
+                    <td>body</td>
+                    <td>Статус операции</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birthday_id</td>
+                    <td>int</td>
+                    <td>body</td>
+                    <td>Уникальный идентификатор созданного дня рождения</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>message</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Сообщение о результате операции</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="response-code success">Response code: 201</div>
+
+        <h2>3. Обновление дня рождения</h2>
+        <div class="endpoint">
+            <span class="method put">PUT</span>
+            <strong>/v1/users/{userId}/birthdays/{birthdayId}</strong>
+            <p>Обновление существующего дня рождения</p>
+        </div>
+
+        <h3>Request</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>userId</td>
+                    <td>int</td>
+                    <td>path</td>
+                    <td>Уникальный идентификатор пользователя (chat_id)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birthdayId</td>
+                    <td>int</td>
+                    <td>path</td>
+                    <td>Уникальный идентификатор дня рождения</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>name</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Имя человека</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birth_date</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дата рождения (YYYY-MM-DD)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>info</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дополнительная информация о человеке</td>
+                    <td><span class="optional">нет</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Response</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>success</td>
+                    <td>boolean</td>
+                    <td>body</td>
+                    <td>Статус операции</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>message</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Сообщение о результате операции</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="response-code success">Response code: 200</div>
+
+        <h2>4. Удаление дня рождения</h2>
+        <div class="endpoint">
+            <span class="method delete">DELETE</span>
+            <strong>/v1/users/{userId}/birthdays/{birthdayId}</strong>
+            <p>Удаление дня рождения</p>
+        </div>
+
+        <h3>Request</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>userId</td>
+                    <td>int</td>
+                    <td>path</td>
+                    <td>Уникальный идентификатор пользователя (chat_id)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birthdayId</td>
+                    <td>int</td>
+                    <td>path</td>
+                    <td>Уникальный идентификатор дня рождения</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Response</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>success</td>
+                    <td>boolean</td>
+                    <td>body</td>
+                    <td>Статус операции</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>message</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Сообщение о результате операции</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="response-code success">Response code: 200</div>
+
+        <h2>5. Получение конкретного дня рождения</h2>
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <strong>/v1/users/{userId}/birthdays/{birthdayId}</strong>
+            <p>Получение информации о конкретном дне рождения</p>
+        </div>
+
+        <h3>Request</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>userId</td>
+                    <td>int</td>
+                    <td>path</td>
+                    <td>Уникальный идентификатор пользователя (chat_id)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birthdayId</td>
+                    <td>int</td>
+                    <td>path</td>
+                    <td>Уникальный идентификатор дня рождения</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Response</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>id</td>
+                    <td>int</td>
+                    <td>body</td>
+                    <td>Уникальный идентификатор дня рождения</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>name</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Имя человека</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>birth_date</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дата рождения (YYYY-MM-DD)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>info</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дополнительная информация о человеке</td>
+                    <td><span class="optional">нет</span></td>
+                </tr>
+                <tr>
+                    <td>created_at</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дата создания записи</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>updated_at</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Дата последнего обновления</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="response-code success">Response code: 200</div>
+
+        <h2>6. Получение статистики пользователя</h2>
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <strong>/v1/users/{userId}/stats</strong>
+            <p>Получение статистики по дням рождения пользователя</p>
+        </div>
+
+        <h3>Request</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>userId</td>
+                    <td>int</td>
+                    <td>path</td>
+                    <td>Уникальный идентификатор пользователя (chat_id)</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Response</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>total_birthdays</td>
+                    <td>int</td>
+                    <td>body</td>
+                    <td>Общее количество дней рождения</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>upcoming_birthdays</td>
+                    <td>int</td>
+                    <td>body</td>
+                    <td>Количество предстоящих дней рождения</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>today_birthdays</td>
+                    <td>int</td>
+                    <td>body</td>
+                    <td>Количество дней рождения сегодня</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>this_month_birthdays</td>
+                    <td>int</td>
+                    <td>body</td>
+                    <td>Количество дней рождения в этом месяце</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="response-code success">Response code: 200</div>
+
+        <h2>7. Тестирование системы напоминаний</h2>
+        <div class="endpoint">
+            <span class="method post">POST</span>
+            <strong>/v1/admin/test-reminders</strong>
+            <p>Запуск тестовой проверки системы напоминаний (только для администраторов)</p>
+        </div>
+
+        <h3>Request</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>api_key</td>
+                    <td>string</td>
+                    <td>header</td>
+                    <td>API ключ для авторизации</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Response</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название параметра</th>
+                    <th>Тип данных</th>
+                    <th>Находится в</th>
+                    <th>Описание</th>
+                    <th>Обязательность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>success</td>
+                    <td>boolean</td>
+                    <td>body</td>
+                    <td>Статус операции</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>reminders_sent</td>
+                    <td>int</td>
+                    <td>body</td>
+                    <td>Количество отправленных напоминаний</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+                <tr>
+                    <td>message</td>
+                    <td>string</td>
+                    <td>body</td>
+                    <td>Сообщение о результате операции</td>
+                    <td><span class="required">да</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="response-code success">Response code: 200</div>
+
+        <h2>Коды ошибок</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Код</th>
+                    <th>Описание</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="response-code error">400</span></td>
+                    <td>Неверный запрос</td>
+                </tr>
+                <tr>
+                    <td><span class="response-code error">401</span></td>
+                    <td>Не авторизован</td>
+                </tr>
+                <tr>
+                    <td><span class="response-code error">403</span></td>
+                    <td>Доступ запрещен</td>
+                </tr>
+                <tr>
+                    <td><span class="response-code error">404</span></td>
+                    <td>Ресурс не найден</td>
+                </tr>
+                <tr>
+                    <td><span class="response-code error">409</span></td>
+                    <td>Конфликт данных</td>
+                </tr>
+                <tr>
+                    <td><span class="response-code error">500</span></td>
+                    <td>Внутренняя ошибка сервера</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Примеры использования</h2>
+        
+        <h3>Получение всех дней рождения</h3>
+        <div class="code-block">
+<pre>curl -X GET "https://api.birthdaybot.com/v1/users/123456789/birthdays" \
+  -H "Authorization: Bearer YOUR_API_KEY"</pre>
+        </div>
+
+        <h3>Добавление нового дня рождения</h3>
+        <div class="code-block">
+<pre>curl -X POST "https://api.birthdaybot.com/v1/users/123456789/birthdays" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "name": "Анна",
+    "birth_date": "1990-03-15",
+    "info": "Моя сестра"
+  }'</pre>
+        </div>
+
+        <h3>Обновление дня рождения</h3>
+        <div class="code-block">
+<pre>curl -X PUT "https://api.birthdaybot.com/v1/users/123456789/birthdays/1" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "name": "Анна Петрова",
+    "birth_date": "1990-03-15",
+    "info": "Моя сестра, любит рисовать"
+  }'</pre>
+        </div>
+
+        <h3>Удаление дня рождения</h3>
+        <div class="code-block">
+<pre>curl -X DELETE "https://api.birthdaybot.com/v1/users/123456789/birthdays/1" \
+  -H "Authorization: Bearer YOUR_API_KEY"</pre>
+        </div>
+    </div>
+    </div>
+</body>
+</html>
