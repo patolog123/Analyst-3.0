@@ -1,0 +1,295 @@
+openapi: 3.0.3
+info:
+  title: Smart Support Assistant API
+  description: API для системы поддержки с AI-агентом и эскалацией к операторам.
+  version: 1.0.0
+servers:
+  - url: https://api.smartsupport.example.com
+    description: Production server
+  - url: https://sandbox.smartsupport.example.com
+    description: Sandbox server
+
+tags:
+  - name: Clients
+    description: Операции с клиентами
+  - name: Operators
+    description: Управление операторами
+  - name: Chats
+    description: Работа с чатами и сообщениями
+
+paths:
+  /v1/clients/{clientId}:
+    get:
+      tags: [Clients]
+      summary: Получение информации о конкретном клиенте
+      description: Возвращает данные клиента по его идентификатору
+      parameters:
+        - name: clientId
+          in: path
+          description: Уникальный идентификатор клиента
+          required: true
+          schema:
+            type: integer
+            example: 42
+      responses:
+        '200':
+          description: Информация о клиенте успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Неверный запрос (например, нечисловой ID)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid-id:
+                  value:
+                    code: 400
+                    message: "Неверный формат идентификатора клиента"
+                    details: "Идентификатор клиента должен быть целым числом"
+        '404':
+          description: Клиент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                client-not-found:
+                  value:
+                    code: 404
+                    message: "Клиент не найден"
+                    details: "Клиент с указанным ID не существует в системе"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server-error:
+                  value:
+                    code: 500
+                    message: "Внутренняя ошибка сервера"
+                    details: "Произошла непредвиденная ошибка при обработке запроса"
+
+  /v1/operators:
+    post:
+      tags: [Operators]
+      summary: Создание нового оператора
+      description: Добавляет нового оператора в систему
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Анна Петрова"
+                status:
+                  type: string
+                  enum: [online, offline, busy]
+                  example: "online"
+              required:
+                - name
+      responses:
+        '201':
+          description: Оператор успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operator'
+        '400':
+          description: Неверные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid-data:
+                  value:
+                    code: 400
+                    message: "Неверные данные запроса"
+                    details: "Поле 'name' является обязательным"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/chats/{chatId}/messages:
+    get:
+      tags: [Chats]
+      summary: Получение переписки чата
+      description: Возвращает все сообщения из указанного чата с поддержкой пагинации
+      parameters:
+        - name: chatId
+          in: path
+          description: Уникальный идентификатор чата
+          required: true
+          schema:
+            type: integer
+            example: 123
+        - name: limit
+          in: query
+          description: Количество сообщений на странице
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          description: Смещение для пагинации
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: sort
+          in: query
+          description: Поле для сортировки
+          schema:
+            type: string
+            enum: [sent_time, message_id]
+            default: sent_time
+        - name: order
+          in: query
+          description: Порядок сортировки
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Переписка успешно получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chat_id:
+                    type: integer
+                    example: 123
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 150
+                      limit:
+                        type: integer
+                        example: 50
+                      offset:
+                        type: integer
+                        example: 0
+                      has_more:
+                        type: boolean
+                        example: true
+        '404':
+          description: Чат не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                chat-not-found:
+                  value:
+                    code: 404
+                    message: "Чат не найден"
+                    details: "Чат с указанным ID не существует или недоступен"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        client_id:
+          type: integer
+          example: 42
+        name:
+          type: string
+          example: "Иван Иванов"
+        contact_info:
+          type: string
+          example: "ivan@example.com, +7-999-123-45-67"
+      required:
+        - client_id
+        - name
+        - contact_info
+
+    Operator:
+      type: object
+      properties:
+        operator_id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Анна Петрова"
+        status:
+          type: string
+          enum: [online, offline, busy]
+          example: "online"
+      required:
+        - operator_id
+        - name
+        - status
+
+    Message:
+      type: object
+      properties:
+        message_id:
+          type: integer
+          example: 1001
+        chat_id:
+          type: integer
+          example: 123
+        sender_type:
+          type: string
+          enum: [client, operator]
+          example: "client"
+        content:
+          type: string
+          example: "Здравствуйте, я оплатил заказ, но он до сих пор числится как неоплаченный. Что делать?"
+        sent_time:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:45Z"
+      required:
+        - message_id
+        - chat_id
+        - sender_type
+        - content
+        - sent_time
+
+    Error:
+      type: object
+      description: Стандартизированный формат ответа об ошибке
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: "Ресурс не найден"
+        details:
+          type: string
+          example: "Запись с ID 12345 не существует или была удалена."
