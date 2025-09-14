@@ -1,0 +1,434 @@
+openapi: 3.0.0
+info:
+  title: User Metrics API
+  version: 1.0.0
+  description: REST API для работы с пользователями, их метриками, продуктивностью и рекомендациями.
+
+servers:
+  - url: https://aineiry.swagger.io/api/v3
+
+paths:
+  /users/{telegramId}:
+    get:
+      summary: Получение информации о пользователе по Telegram ID
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{telegramId}/iaf:
+    post:
+      summary: Обновление индивидуальной альфа-частоты (IAF)
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IafUpdateRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IafUpdateResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{userId}/metrics:
+    post:
+      summary: Загрузка метрик для пользователя
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedCountResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Получение всех метрик пользователя
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{userId}/productivity:
+    post:
+      summary: Сохранение периодов продуктивности
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductivityRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedCountResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Получение периодов продуктивности
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductivityResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{userId}/recommendations:
+    post:
+      summary: Сохранение рекомендаций на день
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendationRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{userId}/improvements:
+    post:
+      summary: Сохранение советов по улучшению
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImprovementRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedCountResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - userId
+        - telegramId
+        - createdAt
+      properties:
+        userId:
+          type: integer
+        telegramId:
+          type: integer
+        username:
+          type: string
+        iaf:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+
+    IafUpdateRequest:
+      type: object
+      required:
+        - iaf
+      properties:
+        iaf:
+          type: number
+          format: float
+
+    IafUpdateResponse:
+      type: object
+      required:
+        - telegramId
+        - iaf
+      properties:
+        telegramId:
+          type: integer
+        iaf:
+          type: number
+          format: float
+
+    MetricsRequest:
+      type: object
+      required:
+        - metrics
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Metric'
+
+    MetricsResponse:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Metric'
+
+    Metric:
+      type: object
+      required:
+        - timestamp
+        - cognitive_score
+        - focus
+        - chill
+        - stress
+        - self_control
+        - anger
+        - relaxation_index
+        - concentration_index
+        - fatique_score
+        - reverse_fatique
+        - alpha_gravity
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        cognitive_score:
+          type: integer
+        focus:
+          type: integer
+        chill:
+          type: integer
+        stress:
+          type: integer
+        self_control:
+          type: integer
+        anger:
+          type: integer
+        relaxation_index:
+          type: number
+          format: float
+        concentration_index:
+          type: number
+          format: float
+        fatique_score:
+          type: number
+          format: float
+        reverse_fatique:
+          type: number
+          format: float
+        alpha_gravity:
+          type: number
+          format: float
+        heart_rate:
+          type: integer
+
+    ProductivityRequest:
+      type: object
+      required:
+        - periods
+      properties:
+        periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductivityPeriod'
+
+    ProductivityResponse:
+      type: object
+      properties:
+        periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductivityPeriod'
+
+    ProductivityPeriod:
+      type: object
+      required:
+        - start_time
+        - end_time
+        - productivity_score
+        - recommended_activity
+      properties:
+        id:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        productivity_score:
+          type: number
+          format: float
+        recommended_activity:
+          type: string
+
+    RecommendationRequest:
+      type: object
+      required:
+        - date
+        - recommendation_text
+      properties:
+        date:
+          type: string
+          format: date
+        recommendation_text:
+          type: string
+
+    RecommendationResponse:
+      type: object
+      required:
+        - recommendationId
+      properties:
+        recommendationId:
+          type: integer
+
+    ImprovementRequest:
+      type: object
+      required:
+        - suggestions
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
+
+    SavedCountResponse:
+      type: object
+      required:
+        - savedCount
+      properties:
+        savedCount:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          example: 500
+        message:
+          type: string
+          example: Internal Server Error
