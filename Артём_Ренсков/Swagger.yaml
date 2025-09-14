@@ -1,0 +1,219 @@
+openapi: 3.0.0
+info:
+  title: Telegram Bot API (Custom REST + Webhooks)
+  version: 1.0.0
+  description: |
+    REST API для управления пользователями, каналами и постами.  
+    Также содержит endpoint для обработки вебхуков от Telegram.  
+
+servers:
+  - url: http://localhost:8000/v1
+    description: Локальный сервер
+  - url: https://myserver.com/v1
+    description: Продакшн сервер
+
+paths:
+  /users:
+    get:
+      summary: Получить список пользователей
+      responses:
+        "200":
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+    post:
+      summary: Создать пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /channels:
+    get:
+      summary: Получить список каналов
+      responses:
+        "200":
+          description: Список каналов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Channel"
+
+    post:
+      summary: Создать канал
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChannelInput"
+      responses:
+        "201":
+          description: Канал создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+
+  /posts:
+    get:
+      summary: Получить посты канала
+      parameters:
+        - in: query
+          name: channelId
+          required: true
+          schema:
+            type: integer
+          description: ID канала
+      responses:
+        "200":
+          description: Список постов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Post"
+
+    post:
+      summary: Создать новый пост
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostInput"
+      responses:
+        "201":
+          description: Пост создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+
+  /webhook/telegram:
+    post:
+      summary: Вебхук для Telegram
+      description: Этот endpoint вызывается Telegram Bot API при событиях (новое сообщение, callback и т.д.)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                update_id:
+                  type: integer
+                message:
+                  type: object
+                  properties:
+                    message_id:
+                      type: integer
+                    date:
+                      type: integer
+                    text:
+                      type: string
+                    chat:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        type:
+                          type: string
+                        username:
+                          type: string
+      responses:
+        "200":
+          description: Вебхук успешно обработан
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        username:
+          type: string
+        telegram_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    UserInput:
+      type: object
+      required:
+        - telegram_id
+      properties:
+        username:
+          type: string
+        telegram_id:
+          type: integer
+
+    Channel:
+      type: object
+      properties:
+        channel_id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        status:
+          type: string
+
+    ChannelInput:
+      type: object
+      required:
+        - user_id
+        - name
+      properties:
+        user_id:
+          type: integer
+        name:
+          type: string
+
+    Post:
+      type: object
+      properties:
+        post_id:
+          type: integer
+        channel_id:
+          type: integer
+        text:
+          type: string
+        style:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+
+    PostInput:
+      type: object
+      required:
+        - channel_id
+        - text
+      properties:
+        channel_id:
+          type: integer
+        text:
+          type: string
+        style:
+          type: string
