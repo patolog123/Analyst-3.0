@@ -1,0 +1,58 @@
+@startuml
+title Wellness AI Bot — Sequence (планы питания и тренировок)
+
+actor User
+participant "Telegram Server" as TG
+participant "Backend (FastAPI)" as BE
+database "PostgreSQL" as DB
+participant "LLM API" as LLM
+
+' ---- старт ----
+User -> TG : /start
+TG -> BE  : webhook /start
+activate BE
+BE -> TG  : приветствие + кнопки [Новые данные] [Старые данные]
+TG -> User: показать сообщение
+
+' ---- выбор данных ----
+alt Ввести новые данные
+  User -> TG : заполнить профиль
+  TG -> BE  : webhook: новые данные профиля
+  BE  -> DB : INSERT/UPSERT profile
+  DB --> BE : OK
+else Использовать старые
+  User -> TG : использовать старые
+  TG -> BE  : webhook: запрос профиля
+  BE  -> DB : SELECT profile
+  DB --> BE : профиль найден/нет
+end
+
+BE -> TG  : меню: [План питания] [План тренировок]
+TG -> User: показать кнопки
+
+' ---- план питания ----
+group Составить план питания
+  User -> TG : нажал «План питания»
+  TG -> BE  : webhook: запрос плана питания
+  BE  -> DB : SELECT профиль/цели
+  DB --> BE : данные профиля
+  BE  -> LLM: prompt: сгенерируй меню
+  LLM --> BE: текст плана
+  BE  -> DB : INSERT план в plans (plan_type = nutrition)
+  BE  -> TG : ответ пользователю: план питания
+end
+
+' ---- план тренировок ----
+group Составить план тренировок
+  User -> TG : нажал «План тренировок»
+  TG -> BE  : webhook: запрос плана тренировок
+  BE  -> DB : SELECT профиль/цели
+  DB --> BE : данные профиля
+  BE  -> LLM: prompt: сгенерируй тренировки
+  LLM --> BE: текст плана
+  BE  -> DB : INSERT план в plans (plan_type = workout)
+  BE  -> TG : ответ пользователю: план тренировок
+end
+deactivate BE
+
+@enduml

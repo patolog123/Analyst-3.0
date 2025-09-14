@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://example.com/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.6.1">
+  <process id="DocumentAnalysisProcess" isExecutable="true">
+    <startEvent id="StartEvent" name="/start бота" />
+    <task id="UploadDocument" name="Загрузка документа" />
+    <task id="IndexContent" name="Индексация и извлечение данных">
+      <outgoing>Flow_0ojx8z3</outgoing>
+      <outgoing>Flow_09kn4r2</outgoing>
+    </task>
+    <task id="GenerateSummary" name="/summary - Генерация саммари" />
+    <sequenceFlow id="flow1" sourceRef="StartEvent" targetRef="UploadDocument" />
+    <sequenceFlow id="flow2" sourceRef="UploadDocument" targetRef="IndexContent" />
+    <sequenceFlow id="flow3" sourceRef="IndexContent" targetRef="GenerateSummary" />
+    <task id="Activity_0fe9dlv" name="/qa - Ответы на вопросы по содержанию">
+      <incoming>Flow_0ojx8z3</incoming>
+    </task>
+    <sequenceFlow id="Flow_0ojx8z3" sourceRef="IndexContent" targetRef="Activity_0fe9dlv" />
+    <task id="Activity_1nlxo3u" name="/content - Генерация сжатого оглавления">
+      <incoming>Flow_09kn4r2</incoming>
+    </task>
+    <sequenceFlow id="Flow_09kn4r2" sourceRef="IndexContent" targetRef="Activity_1nlxo3u" />
+  </process>
+  <bpmndi:BPMNDiagram id="Diagram_1">
+    <bpmndi:BPMNPlane id="Plane_1" bpmnElement="DocumentAnalysisProcess">
+      <bpmndi:BPMNShape id="StartEvent_di" bpmnElement="StartEvent">
+        <dc:Bounds x="160" y="100" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="153" y="136" width="51" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UploadDocument_di" bpmnElement="UploadDocument">
+        <dc:Bounds x="220" y="90" width="120" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IndexContent_di" bpmnElement="IndexContent">
+        <dc:Bounds x="360" y="90" width="140" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GenerateSummary_di" bpmnElement="GenerateSummary">
+        <dc:Bounds x="520" y="90" width="160" height="56" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1nlxo3u_di" bpmnElement="Activity_1nlxo3u">
+        <dc:Bounds x="520" y="290" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0fe9dlv_di" bpmnElement="Activity_0fe9dlv">
+        <dc:Bounds x="520" y="180" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow1_di" bpmnElement="flow1">
+        <di:waypoint x="196" y="118" />
+        <di:waypoint x="220" y="118" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow2_di" bpmnElement="flow2">
+        <di:waypoint x="340" y="118" />
+        <di:waypoint x="360" y="118" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow3_di" bpmnElement="flow3">
+        <di:waypoint x="500" y="118" />
+        <di:waypoint x="520" y="118" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ojx8z3_di" bpmnElement="Flow_0ojx8z3">
+        <di:waypoint x="500" y="118" />
+        <di:waypoint x="510" y="118" />
+        <di:waypoint x="510" y="220" />
+        <di:waypoint x="520" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09kn4r2_di" bpmnElement="Flow_09kn4r2">
+        <di:waypoint x="500" y="118" />
+        <di:waypoint x="510" y="118" />
+        <di:waypoint x="510" y="330" />
+        <di:waypoint x="520" y="330" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
