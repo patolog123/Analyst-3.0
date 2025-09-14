@@ -5,7 +5,7 @@ info:
     REST API для Telegram-бота "AI-Book", который предоставляет персональные рекомендации книг на основе предпочтений пользователя.
   version: 1.0.0
 servers:
-  - url: https://api.ai-book.com/v1
+  - url: https://openrouter.ai/deepseek/deepseek-chat-v3.1/api
     description: Основной сервер API
 
 tags:
@@ -453,3 +453,4 @@ components:
         status:
           type: string
           enum: [success, error]
+
