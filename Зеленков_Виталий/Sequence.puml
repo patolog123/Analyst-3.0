@@ -1,0 +1,56 @@
+@startuml Формирование отчета в Telegram Bot
+
+skinparam DatabaseBackgroundColor #D8BFD8
+skinparam ParticipantBackgroundColor #ADD8E6
+skinparam ActorBackgroundColor #98FB98
+
+
+actor "User" as user
+participant "TG-Bot" as bot 
+participant "TG-Server" as telegram
+participant "Python-Backend" as backend
+participant "API-Avito" as avito
+participant "LLM-DeepSeek" as llm
+database "PG" as db
+
+activate user
+user -> bot : Сформировать отчет
+activate bot
+
+bot -> telegram : Запрос отчета
+activate telegram
+
+telegram -> backend : Команда: "report"
+activate backend
+
+backend -> avito : Запрос диалогов
+activate avito
+avito --> backend : Данные диалогов
+deactivate avito
+
+backend -> db : Сохранение диалогов
+activate db
+db --> backend : OK
+deactivate db
+
+backend -> llm : Анализ диалогов
+activate llm
+llm --> backend : Результаты анализа
+deactivate llm
+
+backend -> db : Сохранение результатов анализа
+activate db
+db --> backend : OK
+deactivate db
+
+backend -> backend : Формирование отчета
+
+backend -> telegram : Готовый отчет
+telegram -> bot : Отправка отчета
+bot -> user : Показать отчет
+
+deactivate backend
+deactivate telegram
+deactivate bot
+
+@enduml
