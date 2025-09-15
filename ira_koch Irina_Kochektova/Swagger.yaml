@@ -1,0 +1,381 @@
+openapi: 3.0.0
+info:
+  title: ai_agent_assistant_bot
+  description: Спецификация REST API для бота-планировщика
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+paths:
+  /users:
+    post:
+      summary: Создание пользователя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - name
+              properties:
+                user_id:
+                  type: integer
+                  description: Уникальный идентификатор пользователя в Telegram
+                name:
+                  type: string
+                  description: Имя пользователя (ник)
+      responses:
+        "201":
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+                  name:
+                    type: string
+                  created:
+                    type: boolean
+                    description: Был ли пользователь создан (true) или уже существовал (false)
+        "500":
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Ошибка базы данных при создании пользователя
+  /goals:
+    post:
+      summary: Создание долгосрочной цели
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - description_goal
+              properties:
+                user_id:
+                  type: integer
+                description_goal:
+                  type: string
+      responses:
+        "201":
+          description: Цель создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  goal_id:
+                    type: integer
+                  user_id:
+                    type: integer
+                  description_goal:
+                    type: string
+                  created_at_goal:
+                    type: string
+                    format: date-time
+        "500":
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /users/{user_id}/goals:
+    get:
+      summary: Получение целей пользователя
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Список целей пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+                  goals:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        goal_id:
+                          type: integer
+                        description_goal:
+                          type: string
+                        created_at_goal:
+                          type: string
+                          format: date-time
+        "500":
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /events:
+    post:
+      summary: Создание события
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - description_event
+                - start_time
+                - end_time
+                - status
+              properties:
+                user_id:
+                  type: integer
+                description_event:
+                  type: string
+                start_time:
+                  type: string
+                  format: date-time
+                end_time:
+                  type: string
+                  format: date-time
+                status:
+                  type: boolean
+      responses:
+        "201":
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id:
+                    type: integer
+                  user_id:
+                    type: integer
+                  description_event:
+                    type: string
+                  start_time:
+                    type: string
+                    format: date-time
+                  end_time:
+                    type: string
+                    format: date-time
+                  status:
+                    type: boolean
+        "400":
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Неверные данные в запросе
+        "409":
+          description: Конфликт времени
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: На это время уже запланировано событие
+                  start_time:
+                    type: string
+                    format: date-time
+                  end_time:
+                    type: string
+                    format: date-time
+        "500":
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /users/{user_id}/schedule:
+    get:
+      summary: Получение полного расписания пользователя на будущие даты
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Полное расписание пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+                  schedule:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_id:
+                          type: integer
+                        description_event:
+                          type: string
+                        start_time:
+                          type: string
+                          format: date-time
+                        end_time:
+                          type: string
+                          format: date-time
+                        status:
+                          type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /users/{user_id}/events:
+    delete:
+      summary: Очистка всего расписания пользователя
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: confirmation
+          in: query
+          required: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Расписание очищено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user_id:
+                    type: integer
+                  deleted_count:
+                    type: integer
+                  message:
+                    type: string
+        "400":
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Подтверждение очистки не предоставлено (confirmation=false)
+        "500":
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /goals/{goal_id}/events:
+    get:
+      summary: Получение событий, связанных с целью
+      parameters:
+        - name: goal_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: События, связанные с целью
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  goal_id:
+                    type: integer
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_id:
+                          type: integer
+                        description_event:
+                          type: string
+                        start_time:
+                          type: string
+                          format: date-time
+                        end_time:
+                          type: string
+                          format: date-time
+                        status:
+                          type: string
+        "404":
+          description: Цель не найдена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Цель с указанным goal_id не существует
+                  goal_id:
+                    type: integer
+        "500":
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Сообщение об ошибке
+        details:
+          type: object
+          description: Дополнительная информация об ошибке
+  responses:
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Конфликт данных
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
