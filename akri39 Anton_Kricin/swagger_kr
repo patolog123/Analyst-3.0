@@ -21,7 +21,6 @@ tags:
     description: Состояние интеграций и сервиса
   - name: Telegram
     description: Взаимодействие с Telegram
-
 paths:
   /api/v1/session/start:
     post:
@@ -65,7 +64,10 @@ paths:
                     example: session started
         '400':
           description: Неверный запрос
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/requirements/query:
     post:
       tags: [Market]
@@ -125,9 +127,16 @@ paths:
                     example: 2025-09-14T14:20:00Z
         '401':
           description: Нет авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '502':
           description: Ошибка при обращении к hh.ru
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/resume/analyze:
     post:
       tags: [Resume]
@@ -164,37 +173,30 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required: [missing_skills, plan_8_weeks, resources, full_report]
-                properties:
-                  missing_skills:
-                    type: array
-                    items: { type: string }
-                    example: ["Power BI","A/B testing"]
-                  plan_8_weeks:
-                    type: array
-                    items: { type: string }
-                    example: ["Неделя 1-2: SQL ...","Неделя 3-4: Power BI ..."]
-                  resources:
-                    type: array
-                    items: { type: string }
-                    example: ["Курс Power BI X","Документация pandas Y"]
-                  full_report:
-                    type: string
-                    example: "Анализ резюме показал ... Рекомендуется ..."
-                  model:
-                    type: string
-                    example: gpt-4o-mini
+                allOf:
+                  - $ref: '#/components/schemas/AnalysisReport'
+                  - type: object
+                    properties:
+                      model:
+                        type: string
+                        example: gpt-4o-mini
         '401':
           description: Нет авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '400':
           description: Неверный запрос
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/resume/analyze-file:
     post:
       tags: [Resume]
       summary: Анализ резюме (файл)
-      description: Загрузка файла резюме (pdf/doc/docx/txt), извлечение текста и рекомендации.
+      description: Загрузка файла резюме (pdf/doc/docx/txt), извлечение текста и рекомендации. Ограничение размера файла: до 10MB.
       security:
         - bearerAuth: []
       requestBody:
@@ -214,39 +216,37 @@ paths:
                 file:
                   type: string
                   format: binary
+                  description: Файл резюме (pdf, doc, docx, txt)
       responses:
         '200':
           description: Рекомендации и отчёт
           content:
             application/json:
               schema:
-                type: object
-                required: [missing_skills, plan_8_weeks, resources, full_report]
-                properties:
-                  missing_skills:
-                    type: array
-                    items: { type: string }
-                  plan_8_weeks:
-                    type: array
-                    items: { type: string }
-                  resources:
-                    type: array
-                    items: { type: string }
-                  full_report:
-                    type: string
-                  parsed_text:
-                    type: string
-                    example: "Извлечённый текст резюме..."
+                allOf:
+                  - $ref: '#/components/schemas/AnalysisReport'
+                  - type: object
+                    properties:
+                      parsed_text:
+                        type: string
+                        example: "Извлечённый текст резюме..."
         '401':
           description: Нет авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '415':
           description: Неподдерживаемый формат файла
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/history/{session_id}:
     get:
       tags: [History]
       summary: История сессии
-      description: Список событий (позиция, навыки, загрузка резюме, рекомендации).
+      description: Список событий (позиция, навыки, загрузка резюме, рекомендации). Поддерживает пагинацию.
       security:
         - bearerAuth: []
       parameters:
@@ -255,6 +255,14 @@ paths:
           required: true
           schema: { type: string }
           description: Идентификатор сессии
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+          description: Номер страницы
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+          description: Количество событий на странице
       responses:
         '200':
           description: История событий
@@ -262,7 +270,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [session_id, events]
+                required: [session_id, events, total, page, limit]
                 properties:
                   session_id:
                     type: string
@@ -281,16 +289,32 @@ paths:
                           example: position_query
                         payload:
                           type: object
+                  total:
+                    type: integer
+                    example: 50
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 20
         '401':
           description: Нет авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Сессия не найдена
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/agent/health:
     post:
       tags: [Health]
       summary: Состояние интеграций
-      description: Проверка доступности ИИ и hh.ru.
+      description: Проверка доступности ИИ и hh.ru. (Рекомендуется сменить на GET для idempotence, если нет тела запроса.)
       security:
         - bearerAuth: []
       responses:
@@ -313,7 +337,10 @@ paths:
                     example: 3600
         '401':
           description: Нет авторизации
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/telegram/webhook:
     post:
       tags: [Telegram]
@@ -331,7 +358,13 @@ paths:
           application/json:
             schema:
               type: object
-              description: Объект Update Telegram
+              description: Объект Update из Telegram API (см. документацию Telegram Bot API для полной схемы)
+              properties:
+                update_id:
+                  type: integer
+                message:
+                  type: object
+                  # ... (добавьте полную схему по необходимости)
       responses:
         '200':
           description: Обработано
@@ -341,7 +374,12 @@ paths:
                 type: object
                 properties:
                   ok: { type: boolean, example: true }
-
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/telegram/send:
     post:
       tags: [Telegram]
@@ -381,7 +419,12 @@ paths:
                   message_id:
                     type: integer
                     example: 42
-
+        '401':
+          description: Нет авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     bearerAuth:
@@ -399,3 +442,22 @@ components:
         message:
           type: string
           example: session_id is required
+    AnalysisReport:
+      type: object
+      required: [missing_skills, plan_8_weeks, resources, full_report]
+      properties:
+        missing_skills:
+          type: array
+          items: { type: string }
+          example: ["Power BI","A/B testing"]
+        plan_8_weeks:
+          type: array
+          items: { type: string }
+          example: ["Неделя 1-2: SQL ...","Неделя 3-4: Power BI ..."]
+        resources:
+          type: array
+          items: { type: string }
+          example: ["Курс Power BI X","Документация pandas Y"]
+        full_report:
+          type: string
+          example: "Анализ резюме показал ... Рекомендуется ..."
