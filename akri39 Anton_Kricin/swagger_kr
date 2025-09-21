@@ -1,0 +1,401 @@
+openapi: 3.0.3
+info:
+  title: Career Advisor Agent API
+  description: REST API для ИИ-агента карьерных рекомендаций (Telegram-бот + hh.ru + анализ резюме).
+  version: 1.0.0
+servers:
+  - url: https://api.example.com
+    description: Production
+  - url: http://localhost:8000
+    description: Local dev
+tags:
+  - name: Session
+    description: Инициализация сессии пользователя
+  - name: Market
+    description: Получение рыночных требований (hh.ru)
+  - name: Resume
+    description: Анализ резюме и рекомендации
+  - name: History
+    description: История событий сессии
+  - name: Health
+    description: Состояние интеграций и сервиса
+  - name: Telegram
+    description: Взаимодействие с Telegram
+
+paths:
+  /api/v1/session/start:
+    post:
+      tags: [Session]
+      summary: Старт сессии
+      description: Инициализация пользовательской сессии после /start в Telegram.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tg_user_id]
+              properties:
+                tg_user_id:
+                  type: integer
+                  description: ID пользователя Telegram
+                  example: 123456789
+                username:
+                  type: string
+                  description: Username Telegram
+                  example: anton
+                language:
+                  type: string
+                  description: Язык интерфейса
+                  example: ru
+      responses:
+        '200':
+          description: Сессия создана
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [session_id, message]
+                properties:
+                  session_id:
+                    type: string
+                    example: sess_abc123
+                  message:
+                    type: string
+                    example: session started
+        '400':
+          description: Неверный запрос
+
+  /api/v1/requirements/query:
+    post:
+      tags: [Market]
+      summary: Рыночные требования/навыки
+      description: Получить агрегированные ключевые навыки по позиции из hh.ru.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_id, position]
+              properties:
+                session_id:
+                  type: string
+                  example: sess_abc123
+                position:
+                  type: string
+                  description: Позиция/сфера
+                  example: Data Analyst
+                area:
+                  type: integer
+                  description: Регион hh.ru (ID)
+                  example: 1
+                per_page:
+                  type: integer
+                  description: Количество вакансий для агрегации
+                  default: 50
+                  example: 50
+      responses:
+        '200':
+          description: Список навыков с рынка
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [position, skills, vacancies_count, source, fetched_at]
+                properties:
+                  position:
+                    type: string
+                    example: Data Analyst
+                  skills:
+                    type: array
+                    items: { type: string }
+                    example: ["SQL","Python","Excel","Power BI"]
+                  vacancies_count:
+                    type: integer
+                    example: 50
+                  source:
+                    type: string
+                    example: hh.ru
+                  fetched_at:
+                    type: string
+                    format: date-time
+                    example: 2025-09-14T14:20:00Z
+        '401':
+          description: Нет авторизации
+        '502':
+          description: Ошибка при обращении к hh.ru
+
+  /api/v1/resume/analyze:
+    post:
+      tags: [Resume]
+      summary: Анализ резюме (текст)
+      description: Анализ текста резюме и рыночных навыков, генерация рекомендаций.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_id, position, resume_text]
+              properties:
+                session_id:
+                  type: string
+                  example: sess_abc123
+                position:
+                  type: string
+                  example: Data Analyst
+                resume_text:
+                  type: string
+                  description: Текст резюме
+                  example: "Опыт: Python, SQL, pandas, визуализация..."
+                market_skills:
+                  type: array
+                  items: { type: string }
+                  description: Если уже получены ранее
+                  example: ["SQL","Python","Power BI"]
+      responses:
+        '200':
+          description: Рекомендации и отчёт
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [missing_skills, plan_8_weeks, resources, full_report]
+                properties:
+                  missing_skills:
+                    type: array
+                    items: { type: string }
+                    example: ["Power BI","A/B testing"]
+                  plan_8_weeks:
+                    type: array
+                    items: { type: string }
+                    example: ["Неделя 1-2: SQL ...","Неделя 3-4: Power BI ..."]
+                  resources:
+                    type: array
+                    items: { type: string }
+                    example: ["Курс Power BI X","Документация pandas Y"]
+                  full_report:
+                    type: string
+                    example: "Анализ резюме показал ... Рекомендуется ..."
+                  model:
+                    type: string
+                    example: gpt-4o-mini
+        '401':
+          description: Нет авторизации
+        '400':
+          description: Неверный запрос
+
+  /api/v1/resume/analyze-file:
+    post:
+      tags: [Resume]
+      summary: Анализ резюме (файл)
+      description: Загрузка файла резюме (pdf/doc/docx/txt), извлечение текста и рекомендации.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [session_id, position, file]
+              properties:
+                session_id:
+                  type: string
+                  example: sess_abc123
+                position:
+                  type: string
+                  example: Data Analyst
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Рекомендации и отчёт
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [missing_skills, plan_8_weeks, resources, full_report]
+                properties:
+                  missing_skills:
+                    type: array
+                    items: { type: string }
+                  plan_8_weeks:
+                    type: array
+                    items: { type: string }
+                  resources:
+                    type: array
+                    items: { type: string }
+                  full_report:
+                    type: string
+                  parsed_text:
+                    type: string
+                    example: "Извлечённый текст резюме..."
+        '401':
+          description: Нет авторизации
+        '415':
+          description: Неподдерживаемый формат файла
+
+  /api/v1/history/{session_id}:
+    get:
+      tags: [History]
+      summary: История сессии
+      description: Список событий (позиция, навыки, загрузка резюме, рекомендации).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string }
+          description: Идентификатор сессии
+      responses:
+        '200':
+          description: История событий
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [session_id, events]
+                properties:
+                  session_id:
+                    type: string
+                    example: sess_abc123
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ts:
+                          type: string
+                          format: date-time
+                          example: 2025-09-14T14:30:00Z
+                        type:
+                          type: string
+                          example: position_query
+                        payload:
+                          type: object
+        '401':
+          description: Нет авторизации
+        '404':
+          description: Сессия не найдена
+
+  /api/v1/agent/health:
+    post:
+      tags: [Health]
+      summary: Состояние интеграций
+      description: Проверка доступности ИИ и hh.ru.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Статусы интеграций
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [openai, hh_ru, uptime_sec]
+                properties:
+                  openai:
+                    type: string
+                    example: ok
+                  hh_ru:
+                    type: string
+                    example: ok
+                  uptime_sec:
+                    type: integer
+                    example: 3600
+        '401':
+          description: Нет авторизации
+
+  /api/v1/telegram/webhook:
+    post:
+      tags: [Telegram]
+      summary: Telegram webhook
+      description: Приём апдейтов от Telegram.
+      parameters:
+        - name: X-Telegram-Bot-Api-Secret-Token
+          in: header
+          required: false
+          schema: { type: string }
+          description: Секрет вебхука
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Объект Update Telegram
+      responses:
+        '200':
+          description: Обработано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+
+  /api/v1/telegram/send:
+    post:
+      tags: [Telegram]
+      summary: Отправка сообщения
+      description: Отправить исходящее сообщение пользователю Telegram (опционально).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tg_user_id, text]
+              properties:
+                tg_user_id:
+                  type: integer
+                  example: 123456789
+                text:
+                  type: string
+                  example: "Ваш отчёт готов"
+                parse_mode:
+                  type: string
+                  enum: [MarkdownV2, HTML, None]
+      responses:
+        '200':
+          description: Результат отправки
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  message_id:
+                    type: integer
+                    example: 42
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: invalid_request
+        message:
+          type: string
+          example: session_id is required
