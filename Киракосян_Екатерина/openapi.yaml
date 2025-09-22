@@ -16,8 +16,6 @@ tags:
     description: Операции с анкетами ежей
   - name: Consultations
     description: Консультации с ИИ-агентом
-  - name: Communities
-    description: Сообщества и питомники
 
 paths:
   /users/{userId}/hedgehog-profile:
@@ -148,31 +146,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /communities:
-    get:
-      tags:
-        - Communities
-      summary: Получение списка сообществ и питомников
-      description: Возвращает проверенные сообщества и питомники для ежей
-      responses:
-        '200':
-          description: Список сообществ
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  communities:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Community'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
 components:
   schemas:
     HedgehogProfileInput:
@@ -249,7 +222,7 @@ components:
         answer:
           type: string
           description: Текст ответа, сгенерированный LLM для общих вопросов
-          example: "Для купания ежа используйте теплую воду (около 35°C) и специальный шампунь для грызунов или ежей. Нанесите небольшое количество шампуня, аккуратно помассируйте и тщательно смойте. После купания заверните ежа в мягкое полотенце и осторожно промокните шерсть."
+          example: "Для купания ежа используйте теплую воду (около 35°C) и специальный шампунь для грызунов или ежей. Нанесите небольшое количество шампуня, аккуратно помассируйте и тщательно смойте. После купания завершите ежа в мягкое полотенце и осторожно промокните шерсть."
         questionType:
           type: string
           enum: ["general"]
@@ -290,31 +263,6 @@ components:
         code:
           type: string
           example: "critical_symptoms_detected"
-
-    Community:
-      type: object
-      required:
-        - name
-        - link
-        - type
-      properties:
-        name:
-          type: string
-          example: "Сообщество любителей ежей"
-        link:
-          type: string
-          format: uri
-          example: "https://t.me/hedgehog_lovers"
-        type:
-          type: string
-          enum: ["community", "nursery"]
-          example: "community"
-        description:
-          type: string
-          example: "Крупное сообщество с полезными советами по уходу за ежами"
-        verified:
-          type: boolean
-          example: true
 
     Error:
       type: object
