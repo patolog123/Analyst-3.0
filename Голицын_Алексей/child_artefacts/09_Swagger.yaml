@@ -1,376 +1,83 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
-  title: Medical Coding API - МКБ-10 Кодировщик
-  description: |
-    REST API для медицинского бота-кодировщика по классификации МКБ-10.
-    Система позволяет анализировать медицинские тексты и находить соответствующие коды МКБ-10.
-    
-    Основные возможности:
-    - Управление пользователями и запросами
-    - Поиск и создание кодов МКБ-10
-    - Статистика системы
-    - История запросов пользователей
+  title: Medical ICD-10 Coding Bot API
+  description: Telegram bot for medical text analysis and ICD-10 code classification
   version: 1.0.0
   contact:
-    name: Medical Coding API Support
-    email: support@medicalcoding.com
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: Medical Bot Support
 
 servers:
-  - url: http://localhost:5000
-    description: Локальный сервер разработки
-  - url: https://api.medicalcoding.com
-    description: Продакшен сервер
-
-tags:
-  - name: health
-    description: Проверка состояния API
-  - name: users
-    description: Управление пользователями
-  - name: requests
-    description: Управление медицинскими запросами
-  - name: codes
-    description: Управление кодами МКБ-10
-  - name: statistics
-    description: Статистика системы
+  - url: https://api.telegram.org/bot{BOT_TOKEN}
+    description: Telegram Bot API
 
 paths:
-  /api/health:
-    get:
-      tags:
-        - health
-      summary: Проверка состояния API
-      description: Возвращает статус работы API и текущее время
-      responses:
-        '200':
-          description: API работает корректно
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: healthy
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: "2024-01-15T10:30:00Z"
-                  message:
-                    type: string
-                    example: Medical Coding API is running
-
-  /api/users:
-    get:
-      tags:
-        - users
-      summary: Получить список всех пользователей
-      description: Возвращает список всех зарегистрированных пользователей
-      responses:
-        '200':
-          description: Список пользователей получен успешно
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  users:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/User'
-                  total:
-                    type: integer
-                    example: 42
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/users/{user_id}:
-    get:
-      tags:
-        - users
-      summary: Получить информацию о пользователе
-      parameters:
-        - name: user_id
-          in: path
-          required: true
-          description: ID пользователя
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Информация о пользователе получена успешно
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/requests:
-    get:
-      tags:
-        - requests
-      summary: Получить список запросов с пагинацией
-      parameters:
-        - name: page
-          in: query
-          required: false
-          description: Номер страницы (по умолчанию 1)
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: per_page
-          in: query
-          required: false
-          description: Количество запросов на странице (по умолчанию 10)
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-      responses:
-        '200':
-          description: Список запросов получен успешно
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  requests:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/RequestWithUser'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
+  /start:
     post:
-      tags:
-        - requests
-      summary: Создать новый медицинский запрос
-      description: Создает новый запрос для анализа медицинского текста
+      summary: Start bot and show main menu
+      description: Initializes user registration and displays main navigation menu
+      responses:
+        '200':
+          description: Welcome message with inline keyboard
+
+  /help:
+    post:
+      summary: Show help information
+      description: Displays bot usage instructions and examples
+      responses:
+        '200':
+          description: Help text with navigation buttons
+
+  /history:
+    post:
+      summary: Get user request history
+      description: Retrieves user's previous medical coding requests with pagination
+      parameters:
+        - name: offset
+          in: query
+          schema:
+            type: integer
+          description: Pagination offset
+      responses:
+        '200':
+          description: List of previous requests with details
+
+  /stats:
+    post:
+      summary: Get user statistics
+      description: Shows user activity statistics and coding metrics
+      responses:
+        '200':
+          description: Statistics including request count, codes found, average confidence
+
+  /search:
+    post:
+      summary: Search ICD-10 codes by keywords
+      description: Direct search in ICD-10 database using RAG system
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Medical keywords to search
+      responses:
+        '200':
+          description: List of relevant ICD-10 codes with similarity scores
+
+  /handle_message:
+    post:
+      summary: Process medical text and return ICD-10 codes
+      description: Main endpoint for medical text analysis using AI and RAG
       requestBody:
         required: true
         content:
-          application/json:
+          text/plain:
             schema:
-              type: object
-              required:
-                - telegram_id
-                - input_text
-              properties:
-                telegram_id:
-                  type: integer
-                  description: Telegram ID пользователя
-                  example: 123456789
-                input_text:
-                  type: string
-                  description: Медицинский текст для анализа
-                  example: "пациент с кашлем и температурой"
-                telegram_name:
-                  type: string
-                  description: Имя пользователя в Telegram (опционально)
-                  example: "test_user"
-      responses:
-        '201':
-          description: Запрос создан успешно
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  request_id:
-                    type: integer
-                    example: 1
-                  user_id:
-                    type: integer
-                    example: 1
-                  message:
-                    type: string
-                    example: Request created successfully
-                  status:
-                    type: string
-                    example: pending
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/requests/{request_id}:
-    get:
-      tags:
-        - requests
-      summary: Получить детальную информацию о запросе
-      parameters:
-        - name: request_id
-          in: path
-          required: true
-          description: ID запроса
-          schema:
-            type: integer
-            example: 1
+              type: string
+              example: "пациент с кашлем и температурой"
       responses:
         '200':
-          description: Детальная информация о запросе получена успешно
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  request:
-                    $ref: '#/components/schemas/Request'
-                  codes:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AnswerWithCode'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/codes:
-    get:
-      tags:
-        - codes
-      summary: Получить список кодов МКБ-10
-      parameters:
-        - name: search
-          in: query
-          required: false
-          description: Поиск по коду или описанию
-          schema:
-            type: string
-            example: "кашель"
-      responses:
-        '200':
-          description: Список кодов получен успешно
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  codes:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Code'
-                  total:
-                    type: integer
-                    example: 150
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-    post:
-      tags:
-        - codes
-      summary: Создать новый код МКБ-10
-      description: Добавляет новый код МКБ-10 в базу данных
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - code_icd10
-                - description
-              properties:
-                code_icd10:
-                  type: string
-                  description: Код МКБ-10
-                  example: "R05"
-                description:
-                  type: string
-                  description: Описание кода
-                  example: "Кашель"
-                is_diagnosis:
-                  type: boolean
-                  description: Является ли код диагнозом
-                  default: true
-      responses:
-        '201':
-          description: Код создан успешно
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  code_id:
-                    type: integer
-                    example: 1
-                  code_icd10:
-                    type: string
-                    example: "R05"
-                  message:
-                    type: string
-                    example: Code created successfully
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          description: Код уже существует
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/codes/{code_icd10}:
-    get:
-      tags:
-        - codes
-      summary: Получить информацию о коде МКБ-10
-      parameters:
-        - name: code_icd10
-          in: path
-          required: true
-          description: Код МКБ-10
-          schema:
-            type: string
-            example: "R05"
-      responses:
-        '200':
-          description: Информация о коде получена успешно
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Code'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/stats:
-    get:
-      tags:
-        - statistics
-      summary: Получить статистику системы
-      description: Возвращает общую статистику использования системы
-      responses:
-        '200':
-          description: Статистика получена успешно
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  system_stats:
-                    $ref: '#/components/schemas/SystemStats'
-                  recent_users:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/RecentUser'
-                  timestamp:
-                    type: string
-                    format: date-time
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: AI analysis results with relevant ICD-10 codes and confidence percentages
 
 components:
   schemas:
@@ -379,242 +86,75 @@ components:
       properties:
         user_id:
           type: integer
-          description: Уникальный идентификатор пользователя
-          example: 1
         telegram_id:
           type: integer
-          description: ID пользователя в Telegram
-          example: 123456789
         telegram_name:
           type: string
-          description: Имя пользователя в Telegram
-          example: "test_user"
         registration_date:
           type: string
           format: date-time
-          description: Дата регистрации пользователя
-          example: "2024-01-15T10:30:00Z"
 
     Request:
       type: object
       properties:
         request_id:
           type: integer
-          description: Уникальный идентификатор запроса
-          example: 1
         user_id:
           type: integer
-          description: ID пользователя, создавшего запрос
-          example: 1
         input_text:
           type: string
-          description: Исходный медицинский текст
-          example: "пациент с кашлем и температурой"
         processed_text:
           type: string
-          description: Обработанный текст (если отличается от исходного)
-          example: "Кашель и лихорадка"
         status:
           type: string
-          enum: [pending, processing, completed, failed]
-          description: Статус обработки запроса
-          example: "completed"
+          enum: [pending, processing, completed]
         request_date:
           type: string
           format: date-time
-          description: Дата создания запроса
-          example: "2024-01-15T10:30:00Z"
 
-    RequestWithUser:
-      allOf:
-        - $ref: '#/components/schemas/Request'
-        - type: object
-          properties:
-            telegram_id:
-              type: integer
-              example: 123456789
-            telegram_name:
-              type: string
-              example: "test_user"
-            answers_count:
-              type: integer
-              description: Количество найденных кодов для запроса
-              example: 3
-
-    Code:
+    ICD10Code:
       type: object
       properties:
-        code_id:
-          type: integer
-          description: Уникальный идентификатор кода
-          example: 1
         code_icd10:
           type: string
-          description: Код МКБ-10
-          example: "R05"
+          example: "A00.0"
         description:
           type: string
-          description: Описание кода
-          example: "Кашель"
-        is_diagnosis:
-          type: boolean
-          description: Является ли код диагнозом
-          example: true
-
-    Answer:
-      type: object
-      properties:
-        answer_id:
-          type: integer
-          description: Уникальный идентификатор ответа
-          example: 1
-        request_id:
-          type: integer
-          description: ID связанного запроса
-          example: 1
-        code_id:
-          type: integer
-          description: ID связанного кода
-          example: 1
-        description:
-          type: string
-          description: Описание ответа
-          example: "Найденный код для симптома"
         confidence:
           type: number
           format: float
-          description: Точность соответствия в процентах
-          example: 85.5
-        status:
-          type: string
-          enum: [generated, confirmed, rejected]
-          description: Статус ответа
-          example: "generated"
-        completion_date:
-          type: string
-          format: date-time
-          description: Дата создания ответа
-          example: "2024-01-15T10:30:00Z"
+          minimum: 0
+          maximum: 100
 
-    AnswerWithCode:
-      allOf:
-        - $ref: '#/components/schemas/Answer'
-        - type: object
-          properties:
-            code_icd10:
-              type: string
-              example: "R05"
-            code_description:
-              type: string
-              example: "Кашель"
-
-    SystemStats:
+    RAGResult:
       type: object
       properties:
-        total_users:
-          type: integer
-          description: Общее количество пользователей
-          example: 42
-        total_requests:
-          type: integer
-          description: Общее количество запросов
-          example: 150
-        completed_requests:
-          type: integer
-          description: Количество завершенных запросов
-          example: 145
-        processing_requests:
-          type: integer
-          description: Количество запросов в обработке
-          example: 3
-        pending_requests:
-          type: integer
-          description: Количество ожидающих запросов
-          example: 2
-        total_codes_found:
-          type: integer
-          description: Общее количество найденных кодов
-          example: 320
-        avg_confidence:
+        code:
+          type: string
+        description:
+          type: string
+        similarity:
           type: number
           format: float
-          description: Средняя точность соответствия
-          example: 78.5
 
-    RecentUser:
+    AIResponse:
       type: object
       properties:
-        telegram_name:
+        original_query:
           type: string
-          example: "test_user"
-        last_activity:
+        rag_context:
           type: string
-          format: date-time
-          description: Дата последней активности
-          example: "2024-01-15T10:30:00Z"
-
-    Pagination:
-      type: object
-      properties:
-        page:
-          type: integer
-          description: Текущая страница
-          example: 1
-        per_page:
-          type: integer
-          description: Количество элементов на странице
-          example: 10
-        total:
-          type: integer
-          description: Общее количество элементов
-          example: 150
-        pages:
-          type: integer
-          description: Общее количество страниц
-          example: 15
-
-    Error:
-      type: object
-      properties:
-        error:
+        ai_analysis:
           type: string
-          description: Сообщение об ошибке
-          example: "Internal server error"
+        formatted_codes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICD10Code'
 
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            error: "Missing required fields: telegram_id and input_text"
-
-    NotFound:
-      description: Ресурс не найден
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            error: "User not found"
-
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            error: "Internal server error"
-
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API ключ для аутентификации
-
-security:
-  - ApiKeyAuth: []
+tags:
+  - name: Medical Coding
+    description: ICD-10 code classification endpoints
+  - name: User Management
+    description: User data and history management
+  - name: Search
+    description: ICD-10 database search functionality
