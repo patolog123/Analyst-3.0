@@ -3,10 +3,14 @@ info:
   title: Telegram Bot API
   description: API для Telegram-бота планировщика событий
   version: 1.0.0
+  contact:
+    name: ira
+    email: irakoch23@yandex.ru
 servers:
   - url: http://localhost:8000
+    description: Development server
 paths:
-  /status:
+  /:
     get:
       tags:
         - Health
@@ -29,7 +33,7 @@ paths:
     get:
       tags:
         - Health
-      summary: Детальная проверка статуса
+      summary: Проверка статуса
       description: Возвращает детальную информацию о состоянии сервиса
       responses:
         '200':
