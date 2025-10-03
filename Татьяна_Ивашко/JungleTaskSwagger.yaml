@@ -1,0 +1,411 @@
+openapi: 3.0.3
+info:
+  title: Plant Care API
+  version: 1.0.0
+  description: API для управления растениями, задачами, уведомлениями и чат-ботом.
+servers:
+  - url: https://api.example.com
+
+paths:
+  /plants:
+    post:
+      summary: Добавление нового растения
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plant_name:
+                  type: string
+                species:
+                  type: string
+              required:
+                - plant_name
+      responses:
+        '200':
+          description: Успешное добавление растения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plant'
+
+  /plants/{plantId}:
+    get:
+      summary: Получение информации о растении
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о растении
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plant'
+    put:
+      summary: Обновление информации о растении
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                species:
+                  type: string
+      responses:
+        '200':
+          description: Обновленное растение
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plant'
+    delete:
+      summary: Удаление растения
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешное удаление
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /tasks:
+    post:
+      summary: Создание новой задачи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '200':
+          description: Задача создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+    get:
+      summary: Получение списка задач
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: dueDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Список задач
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+
+  /tasks/{taskId}:
+    get:
+      summary: Получение информации о задаче
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Задача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+    put:
+      summary: Обновление задачи
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Обновленная задача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+    delete:
+      summary: Удаление задачи
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /tasks/{taskId}/status:
+    patch:
+      summary: Изменение статуса задачи
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [pending, completed, skipped]
+              required:
+                - status
+      responses:
+        '200':
+          description: Обновленный статус
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+
+  /notifications:
+    get:
+      summary: Получение списка уведомлений
+      parameters:
+        - name: reminderId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+
+  /notifications/{notificationId}/read:
+    patch:
+      summary: Пометить уведомление как прочитанное
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Уведомление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+
+  /notifications/{notificationId}:
+    delete:
+      summary: Удаление уведомления
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успех
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /chat:
+    post:
+      summary: Отправка сообщения чат-боту
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                message:
+                  type: string
+              required:
+                - userId
+                - message
+      responses:
+        '200':
+          description: Ответ чат-бота
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+                  actions:
+                    type: object
+
+  /chat/history:
+    get:
+      summary: Получение истории диалога
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: История сообщений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      type: object
+
+components:
+  schemas:
+    Plant:
+      type: object
+      properties:
+        id:
+          type: string
+        plant_name:
+          type: string
+        species:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        plantId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        frequency:
+          type: string
+        status:
+          type: string
+
+    TaskCreate:
+      type: object
+      properties:
+        plantId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        frequency:
+          type: string
+      required:
+        - plantId
+        - title
+        - dueDate
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        frequency:
+          type: string
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        read:
+          type: boolean

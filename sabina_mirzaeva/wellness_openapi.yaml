@@ -1,0 +1,568 @@
+
+openapi: 3.0.3
+info:
+  title: Wellness AI Bot API
+  description: >
+    REST API для текстового Telegram-бота, который генерирует **план питания** и **план тренировок**.
+    Пользователь идентифицируется по `telegram_id`, полученному от Telegram через backend.
+  version: 1.0.0
+servers:
+  - url: https://api.wellness-bot.example.com
+    description: Prod
+  - url: https://staging.wellness-bot.example.com
+    description: Staging
+tags:
+  - name: Users
+    description: Регистрация и профиль
+  - name: Menu
+    description: Главное меню бота
+  - name: Plans
+    description: Генерация и управление планами
+  - name: Debug
+    description: Отладочные методы
+
+paths:
+  /v1/users:
+    post:
+      tags: [Users]
+      summary: Регистрация пользователя
+      description: Создать/зарегистрировать пользователя по `telegram_id`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+            examples:
+              default:
+                value:
+                  telegram_id: 1234567890
+                  name: "Alex"
+      responses:
+        '201':
+          description: Пользователь создан или уже существовал
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCreateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /v1/profile:
+    put:
+      tags: [Users]
+      summary: Создать/обновить профиль
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpsertRequest'
+            examples:
+              default:
+                value:
+                  telegram_id: 1234567890
+                  sex: "female"
+                  birth_date: "1996-05-20"
+                  height_cm: 168
+                  weight_kg: 60.5
+                  activity_level: "medium"
+                  dietary_restrictions: "no pork"
+                  allergens: "peanuts"
+                  timezone: "Europe/Moscow"
+      responses:
+        '200':
+          description: Профиль обновлён/создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileUpsertResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    get:
+      tags: [Users]
+      summary: Получить профиль
+      parameters:
+        - in: query
+          name: telegram_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Telegram ID пользователя
+      responses:
+        '200':
+          description: Профиль найден (или null)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileGetResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /v1/menu:
+    get:
+      tags: [Menu]
+      summary: Получить главное меню
+      parameters:
+        - in: query
+          name: telegram_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Telegram ID пользователя
+      responses:
+        '200':
+          description: Список доступных пунктов меню
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /v1/plans/generate:
+    post:
+      tags: [Plans]
+      summary: Сгенерировать план (питания или тренировок)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanGenerateRequest'
+            examples:
+              nutrition:
+                value:
+                  telegram_id: 1234567890
+                  plan_type: "nutrition"
+                  goal_hint: "Снижение 5 кг за 2 месяца"
+              workout:
+                value:
+                  telegram_id: 1234567890
+                  plan_type: "workout"
+      responses:
+        '201':
+          description: План создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /v1/users/{telegram_id}/plans:
+    get:
+      tags: [Plans]
+      summary: Список планов пользователя
+      parameters:
+        - in: path
+          name: telegram_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: type
+          required: false
+          schema:
+            type: string
+            enum: [nutrition, workout]
+        - in: query
+          name: active
+          required: false
+          schema:
+            type: boolean
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: offset
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список планов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /v1/plans/{plan_id}:
+    get:
+      tags: [Plans]
+      summary: Получить конкретный план
+      parameters:
+        - in: path
+          name: plan_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: План
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      tags: [Plans]
+      summary: Удалить план
+      parameters:
+        - in: path
+          name: plan_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deleted_id:
+                    type: integer
+                    format: int64
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /v1/plans/{plan_id}/activate:
+    patch:
+      tags: [Plans]
+      summary: Сделать план активным
+      parameters:
+        - in: path
+          name: plan_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: План активирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanActivateResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /v1/debug/llm:
+    post:
+      tags: [Debug]
+      summary: Логировать запрос/ответ LLM
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LLMLogRequest'
+      responses:
+        '201':
+          description: Лог создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LLMLogResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  responses:
+    BadRequest:
+      description: Неверные параметры
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Объект не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Конфликт бизнес‑правил
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "bad_request"
+        message:
+          type: string
+          example: "Validation failed"
+    UserCreateRequest:
+      type: object
+      required: [telegram_id]
+      properties:
+        telegram_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          maxLength: 128
+    UserCreateResponse:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          format: int64
+        telegram_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        created:
+          type: boolean
+    ProfileUpsertRequest:
+      type: object
+      required: [telegram_id]
+      properties:
+        telegram_id:
+          type: integer
+          format: int64
+        sex:
+          type: string
+          enum: [male, female, other]
+        birth_date:
+          type: string
+          format: date
+        height_cm:
+          type: integer
+          minimum: 1
+        weight_kg:
+          type: number
+          format: float
+          minimum: 1
+        activity_level:
+          type: string
+          enum: [low, medium, high]
+        dietary_restrictions:
+          type: string
+        allergens:
+          type: string
+        timezone:
+          type: string
+          example: Europe/Moscow
+    Profile:
+      type: object
+      properties:
+        sex:
+          type: string
+        birth_date:
+          type: string
+          format: date
+        height_cm:
+          type: integer
+        weight_kg:
+          type: number
+          format: float
+        activity_level:
+          type: string
+        dietary_restrictions:
+          type: string
+        allergens:
+          type: string
+        timezone:
+          type: string
+    ProfileUpsertResponse:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          format: int64
+        updated:
+          type: boolean
+        profile:
+          $ref: '#/components/schemas/Profile'
+    ProfileGetResponse:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          format: int64
+        profile:
+          oneOf:
+            - $ref: '#/components/schemas/Profile'
+            - nullable: true
+    MenuResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          example: ["План питания","План тренировок"]
+        active_profile:
+          type: boolean
+        active_plans:
+          type: object
+          properties:
+            nutrition:
+              type: integer
+              format: int64
+              nullable: true
+            workout:
+              type: integer
+              format: int64
+              nullable: true
+    PlanGenerateRequest:
+      type: object
+      required: [telegram_id, plan_type]
+      properties:
+        telegram_id:
+          type: integer
+          format: int64
+        plan_type:
+          type: string
+          enum: [nutrition, workout]
+        goal_hint:
+          type: string
+        preferences:
+          type: object
+          additionalProperties: true
+    Plan:
+      type: object
+      properties:
+        plan_id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        plan_type:
+          type: string
+          enum: [nutrition, workout]
+        title:
+          type: string
+        content:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    PlanListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              plan_id:
+                type: integer
+                format: int64
+              plan_type:
+                type: string
+                enum: [nutrition, workout]
+              title:
+                type: string
+              is_active:
+                type: boolean
+              created_at:
+                type: string
+                format: date-time
+        total:
+          type: integer
+    PlanActivateResponse:
+      type: object
+      properties:
+        plan_id:
+          type: integer
+          format: int64
+        plan_type:
+          type: string
+          enum: [nutrition, workout]
+        is_active:
+          type: boolean
+        replaced:
+          type: boolean
+    LLMLogRequest:
+      type: object
+      required: [telegram_id, prompt, response]
+      properties:
+        telegram_id:
+          type: integer
+          format: int64
+        prompt:
+          type: string
+        response:
+          type: string
+        plan_type:
+          type: string
+          enum: [nutrition, workout]
+          nullable: true
+    LLMLogResponse:
+      type: object
+      properties:
+        log_id:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        saved:
+          type: boolean
+

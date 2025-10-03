@@ -1,0 +1,309 @@
+openapi: 3.0.3
+info:
+  title: SocioMind AI Agent API
+  description: |
+    REST API для Telegram-бота "SocioMind", который предоставляет анализ совместимости команд 
+    и рекомендации по управлению на основе соционического типирования
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8000/v1
+    description: Development server
+  - url: https://api.example.com/v1
+    description: Production server
+
+tags:
+  - name: Personality
+    description: Определение соционического типа личности
+  - name: Group
+    description: Анализ групповой динамики и генерация отчетов
+  - name: Chat
+    description: Управление чатами и синхронизация участников
+  - name: Users
+    description: Управление пользователями и их данными
+
+paths:
+  /personality/determine:
+    post:
+      summary: Определение соционического типа личности
+      tags:
+        - Personality
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonalityDetermineRequest"
+      responses:
+        "200":
+          description: Тип успешно определен и сохранен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalityDetermineResponse"
+        "400":
+          description: Неверный формат данных
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /group/analyze:
+    post:
+      summary: Запуск анализа групповой динамики
+      tags:
+        - Group
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupAnalyzeRequest"
+      responses:
+        "200":
+          description: Анализ завершен, отчет сгенерирован и сохранен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupAnalyzeResponse"
+        "403":
+          description: Недостаточно данных для анализа (<70% участников прошли тест)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /group/report/{report_id}:
+    get:
+      summary: Получение сгенерированного отчета по группе
+      tags:
+        - Group
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupReportResponse"
+        "404":
+          description: Отчет с указанным ID не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /chat/sync:
+    post:
+      summary: Синхронизация данных участников чата
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatSyncRequest"
+      responses:
+        "200":
+          description: Синхронизация завершена
+        "500":
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{user_id}:
+    get:
+      summary: Получение информации о пользователе
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "404":
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    PersonalityDetermineRequest:
+      type: object
+      required:
+        - user_id
+        - telegram_username
+        - answers
+      properties:
+        user_id:
+          type: integer
+          description: ID пользователя в системе
+        telegram_username:
+          type: string
+          description: Никнейм пользователя в Telegram (@username)
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TestAnswer"
+          description: Массив ответов пользователя
+
+    TestAnswer:
+      type: object
+      properties:
+        question_id:
+          type: integer
+          description: ID вопроса
+        answer:
+          type: string
+          description: Текст ответа пользователя
+
+    PersonalityDetermineResponse:
+      type: object
+      properties:
+        personality_type:
+          type: string
+          description: Определенный тип личности (например, "INTJ")
+        strengths:
+          type: array
+          items:
+            type: string
+          description: Сильные стороны типа
+        weaknesses:
+          type: array
+          items:
+            type: string
+          description: Зоны развития типа
+
+    GroupAnalyzeRequest:
+      type: object
+      required:
+        - chat_id
+      properties:
+        chat_id:
+          type: integer
+          description: ID чата в системе
+        period_days:
+          type: integer
+          description: Количество дней для анализа (по умолчанию 7)
+
+    GroupAnalyzeResponse:
+      type: object
+      properties:
+        report_id:
+          type: integer
+          description: ID сгенерированного отчета
+        generated_at:
+          type: string
+          format: date-time
+          description: Время генерации отчета
+
+    GroupReportResponse:
+      type: object
+      properties:
+        report_id:
+          type: integer
+        chat_id:
+          type: integer
+        generated_at:
+          type: string
+          format: date-time
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        report_text:
+          type: string
+          description: Текст отчета, готовый для отправки в Telegram
+
+    ChatSyncRequest:
+      type: object
+      required:
+        - chat_id
+      properties:
+        chat_id:
+          type: integer
+          description: ID чата в системе
+
+    UserResponse:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        telegram_id:
+          type: integer
+        username:
+          type: string
+        first_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        personality_type:
+          type: string
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Описание ошибки
+        details:
+          type: object
+          description: Дополнительные детали ошибки
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

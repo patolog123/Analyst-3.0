@@ -1,0 +1,447 @@
+openapi: 3.0.3
+info:
+  title: CalendarBot Events API
+  description: |
+    REST API для управления событиями через Telegram бота.
+    Все операции выполняются от имени пользователя (telegram_id).
+
+    ## Основные возможности:
+    - Создание событий с автоматическим парсингом из текста
+    - Просмотр событий по заданному периоду
+    - Изменение существующих событий
+    - Удаление событий
+
+    ## Аутентификация:
+    - Через заголовок `telegram_id` в формате строки
+  version: '1.0.0'
+  contact:
+    name: Development Team
+    email: dev@calendar-bot.example
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.calendar-bot.example/v1
+    description: Production server
+  - url: https://staging.api.calendar-bot.example/v1
+    description: Staging server
+
+tags:
+  - name: events
+    description: Операции с событиями календаря
+
+paths:
+  /events:
+    post:
+      tags: [events]
+      summary: Создание нового события
+      description: |
+        Создает новое событие в календаре пользователя.
+        Поддерживает автоматический парсинг дат и времени из естественного языка.
+      operationId: createEvent
+      parameters:
+        - $ref: '#/components/parameters/TelegramIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreateRequest'
+            examples:
+              meetingExample:
+                summary: Пример создания встречи
+                value:
+                  event_title: "Встреча с командой"
+                  event_description: "Обсуждение релиза продукта"
+                  start_datetime: "2025-09-15T14:00:00"
+                  end_datetime: "2025-09-15T15:30:00"
+                  event_place: "Zoom конференция"
+              simpleEvent:
+                summary: Простое событие
+                value:
+                  event_title: "Обед"
+                  start_datetime: "2025-09-15T13:00:00"
+      responses:
+        '201':
+          description: Событие успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+              examples:
+                createdEvent:
+                  summary: Созданное событие
+                  value:
+                    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    event_title: "Встреча с командой"
+                    event_description: "Обсуждение релиза продукта"
+                    start_datetime: "2025-09-15T14:00:00"
+                    end_datetime: "2025-09-15T15:30:00"
+                    event_place: "Zoom конференция"
+                    created_at: "2025-09-15T10:30:00Z"
+                    updated_at: "2025-09-15T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    get:
+      tags: [events]
+      summary: Получение событий по периоду
+      description: |
+        Возвращает список событий пользователя за указанный период.
+        Поддерживает фильтрацию по дате и времени.
+      operationId: getEvents
+      parameters:
+        - $ref: '#/components/parameters/TelegramIdHeader'
+        - name: start_date
+          in: query
+          description: Начальная дата периода (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+          example: "2025-09-15"
+        - name: end_date
+          in: query
+          description: Конечная дата периода (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+          example: "2025-09-20"
+        - name: start_time
+          in: query
+          description: Время начала (HH:MM)
+          schema:
+            type: string
+            pattern: '^([0-1][0-9]|2[0-3]):[0-5][0-9]$'
+          example: "09:00"
+        - name: end_time
+          in: query
+          description: Время окончания (HH:MM)
+          schema:
+            type: string
+            pattern: '^([0-1][0-9]|2[0-3]):[0-5][0-9]$'
+          example: "18:00"
+        - name: exact_time
+          in: query
+          description: Точное время события (HH:MM)
+          schema:
+            type: string
+            pattern: '^([0-1][0-9]|2[0-3]):[0-5][0-9]$'
+          example: "14:30"
+      responses:
+        '200':
+          description: Список событий получен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventResponse'
+              examples:
+                eventsList:
+                  summary: Список событий
+                  value:
+                    - id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      event_title: "Встреча с командой"
+                      start_datetime: "2025-09-15T14:00:00"
+                      end_datetime: "2025-09-15T15:30:00"
+                      event_place: "Zoom"
+                      created_at: "2025-09-14T10:30:00Z"
+                      updated_at: "2025-09-14T10:30:00Z"
+                    - id: "b2c3d4e5-f6g7-8901-bcde-f23456789012"
+                      event_title: "Обед"
+                      start_datetime: "2025-09-15T13:00:00"
+                      created_at: "2025-09-14T11:45:00Z"
+                      updated_at: "2025-09-14T11:45:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /events/{eventId}:
+    put:
+      tags: [events]
+      summary: Изменение события
+      description: Обновляет данные существующего события
+      operationId: updateEvent
+      parameters:
+        - $ref: '#/components/parameters/TelegramIdHeader'
+        - name: eventId
+          in: path
+          required: true
+          description: UUID события
+          schema:
+            type: string
+            format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventUpdateRequest'
+            examples:
+              updateExample:
+                summary: Обновление времени и места
+                value:
+                  start_datetime: "2025-09-15T15:00:00"
+                  event_place: "Google Meet"
+      responses:
+        '200':
+          description: Событие успешно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    delete:
+      tags: [events]
+      summary: Удаление события
+      description: Удаляет событие по идентификатору
+      operationId: deleteEvent
+      parameters:
+        - $ref: '#/components/parameters/TelegramIdHeader'
+        - name: eventId
+          in: path
+          required: true
+          description: UUID события
+          schema:
+            type: string
+            format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      responses:
+        '200':
+          description: Событие успешно удалено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+              examples:
+                deleteSuccess:
+                  summary: Успешное удаление
+                  value:
+                    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    deleted_at: "2025-09-15T12:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    EventCreateRequest:
+      type: object
+      required:
+        - event_title
+        - start_datetime
+      properties:
+        event_title:
+          type: string
+          description: Название события
+          maxLength: 255
+          example: "Встреча с командой"
+        event_description:
+          type: string
+          description: Описание события
+          maxLength: 1000
+          example: "Обсуждение релиза продукта"
+        start_datetime:
+          type: string
+          format: date-time
+          description: Дата и время начала события (ISO 8601)
+          example: "2025-09-15T14:00:00"
+        end_datetime:
+          type: string
+          format: date-time
+          description: Дата и время окончания события
+          example: "2025-09-15T15:30:00"
+        event_place:
+          type: string
+          description: Место проведения события
+          maxLength: 255
+          example: "Zoom конференция"
+
+    EventUpdateRequest:
+      type: object
+      properties:
+        event_title:
+          type: string
+          description: Новое название события
+          maxLength: 255
+          example: "Встреча с командой"
+        event_description:
+          type: string
+          description: Новое описание события
+          maxLength: 1000
+          example: "Обсуждение релиза продукта"
+        start_datetime:
+          type: string
+          format: date-time
+          description: Новая дата и время начала
+          example: "2025-09-15T15:00:00"
+        end_datetime:
+          type: string
+          format: date-time
+          description: Новая дата и время окончания
+          example: "2025-09-15T16:30:00"
+        event_place:
+          type: string
+          description: Новое место проведения
+          maxLength: 255
+          example: "Google Meet"
+
+    EventResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор события
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        event_title:
+          type: string
+          description: Название события
+          example: "Встреча с командой"
+        event_description:
+          type: string
+          description: Описание события
+          example: "Обсуждение релиза продукта"
+        start_datetime:
+          type: string
+          format: date-time
+          description: Дата и время начала
+          example: "2025-09-15T14:00:00"
+        end_datetime:
+          type: string
+          format: date-time
+          description: Дата и время окончания
+          example: "2025-09-15T15:30:00"
+        event_place:
+          type: string
+          description: Место проведения
+          example: "Zoom конференция"
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания записи
+          example: "2025-09-14T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+          example: "2025-09-14T10:30:00Z"
+
+    DeleteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID удаленного события
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        deleted_at:
+          type: string
+          format: date-time
+          description: Время удаления
+          example: "2025-09-15T12:30:00Z"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Сообщение об ошибке
+          example: "Неверный формат даты"
+        details:
+          type: object
+          description: Детали ошибки
+          additionalProperties: true
+
+  parameters:
+    TelegramIdHeader:
+      name: telegram_id
+      in: header
+      required: true
+      description: Идентификатор пользователя в Telegram
+      schema:
+        type: string
+        example: "1234567890"
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            validationError:
+              summary: Ошибка валидации
+              value:
+                error: "VALIDATION_ERROR"
+                message: "Неверный формат даты"
+                details:
+                  field: "start_datetime"
+                  expected_format: "YYYY-MM-DDTHH:MM:SS"
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            unauthorized:
+              summary: Пользователь не найден
+              value:
+                error: "UNAUTHORIZED"
+                message: "Пользователь с указанным telegram_id не найден"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            eventNotFound:
+              summary: Событие не найдено
+              value:
+                error: "NOT_FOUND"
+                message: "Событие с указанным ID не найдено"
+
+    ServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            databaseError:
+              summary: Ошибка базы данных
+              value:
+                error: "SERVER_ERROR"
+                message: "Ошибка при обращении к базе данных"
+
+security:
+  - ApiKeyAuth: []

@@ -1,0 +1,160 @@
+openapi: 3.0.0
+info:
+  title: Medical ICD-10 Coding Bot API
+  description: Telegram bot for medical text analysis and ICD-10 code classification
+  version: 1.0.0
+  contact:
+    name: Medical Bot Support
+
+servers:
+  - url: https://api.telegram.org/bot{BOT_TOKEN}
+    description: Telegram Bot API
+
+paths:
+  /start:
+    post:
+      summary: Start bot and show main menu
+      description: Initializes user registration and displays main navigation menu
+      responses:
+        '200':
+          description: Welcome message with inline keyboard
+
+  /help:
+    post:
+      summary: Show help information
+      description: Displays bot usage instructions and examples
+      responses:
+        '200':
+          description: Help text with navigation buttons
+
+  /history:
+    post:
+      summary: Get user request history
+      description: Retrieves user's previous medical coding requests with pagination
+      parameters:
+        - name: offset
+          in: query
+          schema:
+            type: integer
+          description: Pagination offset
+      responses:
+        '200':
+          description: List of previous requests with details
+
+  /stats:
+    post:
+      summary: Get user statistics
+      description: Shows user activity statistics and coding metrics
+      responses:
+        '200':
+          description: Statistics including request count, codes found, average confidence
+
+  /search:
+    post:
+      summary: Search ICD-10 codes by keywords
+      description: Direct search in ICD-10 database using RAG system
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Medical keywords to search
+      responses:
+        '200':
+          description: List of relevant ICD-10 codes with similarity scores
+
+  /handle_message:
+    post:
+      summary: Process medical text and return ICD-10 codes
+      description: Main endpoint for medical text analysis using AI and RAG
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: "пациент с кашлем и температурой"
+      responses:
+        '200':
+          description: AI analysis results with relevant ICD-10 codes and confidence percentages
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        telegram_id:
+          type: integer
+        telegram_name:
+          type: string
+        registration_date:
+          type: string
+          format: date-time
+
+    Request:
+      type: object
+      properties:
+        request_id:
+          type: integer
+        user_id:
+          type: integer
+        input_text:
+          type: string
+        processed_text:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed]
+        request_date:
+          type: string
+          format: date-time
+
+    ICD10Code:
+      type: object
+      properties:
+        code_icd10:
+          type: string
+          example: "A00.0"
+        description:
+          type: string
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+
+    RAGResult:
+      type: object
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+        similarity:
+          type: number
+          format: float
+
+    AIResponse:
+      type: object
+      properties:
+        original_query:
+          type: string
+        rag_context:
+          type: string
+        ai_analysis:
+          type: string
+        formatted_codes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICD10Code'
+
+tags:
+  - name: Medical Coding
+    description: ICD-10 code classification endpoints
+  - name: User Management
+    description: User data and history management
+  - name: Search
+    description: ICD-10 database search functionality

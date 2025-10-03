@@ -1,0 +1,300 @@
+openapi: 3.0.3
+info:
+  title: HedgeAiCare API
+  description: API для умного помощника по уходу за ежами в Telegram
+  version: 1.0.0
+  contact:
+    name: HedgeAiCare Team
+    email: support@hedgeaicare.ru
+
+servers:
+  - url: https://api.hedgeaicare.ru/v1
+    description: Production server
+
+tags:
+  - name: Profiles
+    description: Операции с анкетами ежей
+  - name: Consultations
+    description: Консультации с ИИ-агентом
+
+paths:
+  /users/{userId}/hedgehog-profile:
+    get:
+      tags:
+        - Profiles
+      summary: Получение анкеты ежика пользователя
+      description: Проверка наличия и получение данных анкеты ежика
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Уникальный идентификатор пользователя в Telegram
+      responses:
+        '200':
+          description: Анкета найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '404':
+          description: Анкета не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      tags:
+        - Profiles
+      summary: Создание или обновление анкеты ежика
+      description: Сохранение данных анкеты при заполнении или обновлении
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Уникальный идентификатор пользователя в Telegram
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HedgehogProfileInput'
+      responses:
+        '200':
+          description: Анкета успешно сохранена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '400':
+          description: Ошибка валидации данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{userId}/consultations:
+    post:
+      tags:
+        - Consultations
+      summary: Консультация с ИИ-агентом
+      description: |
+        Отправка вопроса и получение консультации с учетом данных анкеты.
+        Вопросы с критическими симптомами возвращают ошибку 422.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: ID пользователя, задающего вопрос
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - question
+              properties:
+                question:
+                  type: string
+                  description: Текст вопроса от пользователя
+                  example: "как купать ежа?"
+                hedgehogProfile:
+                  $ref: '#/components/schemas/HedgehogProfile'
+      responses:
+        '200':
+          description: Успешный ответ ИИ
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/GeneralResponse'
+                  - $ref: '#/components/schemas/MedicalResponse'
+                discriminator:
+                  propertyName: questionType
+        '422':
+          description: Обнаружены критические симптомы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriticalResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    HedgehogProfileInput:
+      type: object
+      required:
+        - breed
+        - age
+        - weight
+      properties:
+        breed:
+          type: string
+          enum: ["африканский", "ушастый", "европейский", "другой"]
+          example: "африканский"
+          description: Порода ежа
+        age:
+          type: integer
+          minimum: 1
+          maximum: 84
+          description: Возраст в месяцах (максимум 7 лет)
+          example: 12
+        weight:
+          type: integer
+          minimum: 100
+          maximum: 800
+          description: Вес в граммах
+          example: 450
+
+    HedgehogProfile:
+      type: object
+      properties:
+        breed:
+          type: string
+          example: "африканский"
+          description: Порода ежа
+        age:
+          type: integer
+          description: Возраст в месяцах
+          example: 12
+        weight:
+          type: integer
+          description: Вес в граммах
+          example: 450
+
+    ProfileResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ID пользователя, которому принадлежит анкета
+          example: 123456789
+        profile:
+          type: object
+          nullable: true
+          properties:
+            breed:
+              type: string
+              example: "африканский"
+            age:
+              type: integer
+              description: Возраст в месяцах
+              example: 12
+            weight:
+              type: integer
+              description: Вес в граммах
+              example: 450
+        lastUpdatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T14:30:00Z"
+
+    GeneralResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+          description: Текст ответа, сгенерированный LLM для общих вопросов
+          example: "Для купания ежа используйте теплую воду (около 35°C) и специальный шампунь для грызунов или ежей. Нанесите небольшое количество шампуня, аккуратно помассируйте и тщательно смойте. После купания завершите ежа в мягкое полотенце и осторожно промокните шерсть."
+        questionType:
+          type: string
+          enum: ["general"]
+          description: Общий вопрос по уходу, питанию, гигиене
+          example: "general"
+
+    MedicalResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+          description: |
+            Текст ответа, сгенерированный LLM. Ответ НАЧИНАЕТСЯ с текста дисклеймера о том, 
+            что это не медицинская рекомендация, а затем следует основной текст.
+          example: "Информация предоставлена ИИ и не является профессиональной медицинской рекомендацией. В случае болезни питомца обязательно обратитесь к ратологу/герпетологу. Чихание у ежа может быть вызвано различными причинами: аллергия, простуда или раздражение от наполнителя. Понаблюдайте за общим состоянием питомца."
+        disclaimer:
+          type: string
+          description: Текст дисклеймера, который можно показать отдельно
+          example: "Информация предоставлена ИИ и не является профессиональной медицинской рекомендацией. В случае болезни питомца обязательно обратитесь к ратологу/герпетологу."
+        questionType:
+          type: string
+          enum: ["medical"]
+          description: Вопрос о неопасных симптомах и здоровье (с дисклеймером)
+          example: "medical"
+
+    CriticalResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Сообщение-алерт для немедленного показа пользователю
+          example: "Похоже, ваш питомец нуждается в срочной помощи! Немедленно свяжитесь с ветеринаром-ратологом. Не теряйте время на чат-боты."
+        questionType:
+          type: string
+          enum: ["critical"]
+          description: Обнаружены критические симптомы (ответ не сгенерирован)
+          example: "critical"
+        code:
+          type: string
+          example: "critical_symptoms_detected"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Произошла внутренняя ошибка сервера"
+        code:
+          type: string
+          example: "internal_server_error"
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Проверьте данные и введите повторно"
+        code:
+          type: string
+          example: "validation_error"
+        invalidField:
+          type: string
+          example: "weight"
+        details:
+          type: string
+          example: "Вес должен быть между 100 и 800 граммами"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - ApiKeyAuth: []

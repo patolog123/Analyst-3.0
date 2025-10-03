@@ -1,0 +1,285 @@
+openapi: 3.0.3
+info:
+  title: Channels and Topics Management API
+  description: REST API для управления телеграмм каналами и их топиками
+  version: '1.0.0'
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/v1
+    description: Development server
+  - url: https://api.example.com/v1
+    description: Production server
+
+tags:
+  - name: channels
+    description: Операции с телеграмм каналами
+  - name: topics
+    description: Операции с топиками каналов
+
+paths:
+  /channels/:
+    post:
+      tags: [channels]
+      summary: Создание записи о канале
+      description: Создает новую запись о телеграмм канале
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelCreateRequest'
+            example:
+              Channel_Name: "Технологии и IT"
+              status: true
+      responses:
+        '200':
+          description: Канал успешно добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelCreateResponse'
+              example:
+                Channel_ID: 12345
+        '404':
+          description: Канал не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Channel not found"
+                message: "Канал не найден"
+
+  /topics/:
+    post:
+      tags: [topics]
+      summary: Создание записи о топике канала
+      description: Создает запись о топике (посте) телеграмм канала
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicCreateRequest'
+            example:
+              Topic_text: "Новые технологии в IT"
+              Search_keys: "технологии IT разработка"
+              Date_created: "2024-01-15T10:30:00Z"
+              Channel_ID: 12345
+      responses:
+        '200':
+          description: Топик успешно добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopicCreateResponse'
+              example:
+                Topic_ID: 67890
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags: [topics]
+      summary: Получение записей с постами по параметрам поиска
+      description: Поиск топиков по различным параметрам фильтрации
+      parameters:
+        - name: Channel_Name
+          in: query
+          description: Часть названия канала
+          required: false
+          schema:
+            type: string
+          example: "технологии"
+        - name: Search_keys
+          in: query
+          description: Строка поиска, по которой был найден пост
+          required: false
+          schema:
+            type: string
+          example: "IT разработка"
+        - name: Date_from
+          in: query
+          description: Начало периода поиска постов
+          required: false
+          schema:
+            type: string
+            format: date-time
+          example: "2024-01-01T00:00:00Z"
+        - name: Date_to
+          in: query
+          description: Окончание периода поиска постов
+          required: false
+          schema:
+            type: string
+            format: date-time
+          example: "2024-01-31T23:59:59Z"
+      responses:
+        '200':
+          description: Список найденных топиков
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopicResponse'
+              example:
+                - Topic_ID: 67890
+                  Topic_text: "Новые технологии в IT"
+                  Search_keys: "технологии IT разработка"
+                  Date_created: "2024-01-15T10:30:00Z"
+                  Channel_ID: 12345
+        '404':
+          description: Посты не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Topics not found"
+                message: "Посты не найдены по заданным критериям"
+
+components:
+  schemas:
+    ChannelCreateRequest:
+      type: object
+      required: [Channel_Name, status]
+      properties:
+        Channel_Name:
+          type: string
+          description: Название телеграмм канала
+          example: "Технологии и IT"
+        status:
+          type: boolean
+          description: Статус канала (приватный - false, публичный - true)
+          example: true
+
+    ChannelCreateResponse:
+      type: object
+      required: [Channel_ID]
+      properties:
+        Channel_ID:
+          type: integer
+          description: Уникальный идентификатор канала
+          example: 12345
+
+    TopicCreateRequest:
+      type: object
+      required: [Topic_text, Search_keys, Date_created, Channel_ID]
+      properties:
+        Topic_text:
+          type: string
+          description: Текст топика
+          example: "Новые технологии в IT"
+        Search_keys:
+          type: string
+          description: Строка поиска, по которой был найден пост
+          example: "технологии IT разработка"
+        Date_created:
+          type: string
+          format: date-time
+          description: Дата создания поста
+          example: "2024-01-15T10:30:00Z"
+        Channel_ID:
+          type: integer
+          description: Идентификатор канала
+          example: 12345
+
+    TopicCreateResponse:
+      type: object
+      required: [Topic_ID]
+      properties:
+        Topic_ID:
+          type: integer
+          description: Уникальный идентификатор записи с найденным постом канала
+          example: 67890
+
+    TopicResponse:
+      type: object
+      required: [Topic_ID, Topic_text, Search_keys, Date_created, Channel_ID]
+      properties:
+        Topic_ID:
+          type: integer
+          description: Уникальный идентификатор записи с найденным постом канала
+          example: 67890
+        Topic_text:
+          type: string
+          description: Текст топика
+          example: "Новые технологии в IT"
+        Search_keys:
+          type: string
+          description: Строка поиска, по которой был найден пост
+          example: "технологии IT разработка"
+        Date_created:
+          type: string
+          format: date-time
+          description: Дата создания поста
+          example: "2024-01-15T10:30:00Z"
+        Channel_ID:
+          type: integer
+          description: Идентификатор канала
+          example: 12345
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Код ошибки
+          example: "not_found"
+        message:
+          type: string
+          description: Описание ошибки
+          example: "Ресурс не найден"
+
+  responses:
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  parameters:
+    ChannelNameParam:
+      name: Channel_Name
+      in: query
+      description: Часть названия канала
+      required: false
+      schema:
+        type: string
+
+    SearchKeysParam:
+      name: Search_keys
+      in: query
+      description: Строка поиска
+      required: false
+      schema:
+        type: string
+
+    DateFromParam:
+      name: Date_from
+      in: query
+      description: Начало периода поиска
+      required: false
+      schema:
+        type: string
+        format: date-time
+
+    DateToParam:
+      name: Date_to
+      in: query
+      description: Окончание периода поиска
+      required: false
+      schema:
+        type: string
+        format: date-time
