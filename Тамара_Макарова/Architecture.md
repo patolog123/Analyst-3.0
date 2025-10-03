@@ -20,7 +20,7 @@ graph TD
     end
 
     subgraph "Внешние сервисы"
-        G{{LLM <i>Gemini</i>}}
+        G{{LLM <i>Gigachat</i>}}
     end
 
     A -- MTProto/TCP --> B
