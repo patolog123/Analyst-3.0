@@ -1,4 +1,2 @@
-# Analyst-3.0
-Курс Analyst 3.0 по BSA от Школы 21
-
-Привет, как зайдешь напиши в чат в Телеге свой Ник на Гите, Имя и Фамилию, спасибо)
+# Free AI at api.airforce
+https://discord.gg/AJDsM7jtbq
